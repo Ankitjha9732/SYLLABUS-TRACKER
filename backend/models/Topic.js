@@ -2,10 +2,15 @@ import mongoose from 'mongoose';
 
 const topicSchema = new mongoose.Schema(
   {
-    moduleId: {
+    sectionId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Module',
-      required: [true, 'Topic must belong to a module'],
+      ref: 'Section',
+      required: [true, 'Topic must belong to a section'],
+    },
+    roadmapId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Roadmap',
+      default: null,
     },
     title: {
       type: String,
@@ -27,6 +32,10 @@ const topicSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    optional: {
+      type: Boolean,
+      default: false,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -38,7 +47,8 @@ const topicSchema = new mongoose.Schema(
   }
 );
 
-topicSchema.index({ moduleId: 1, order: 1 });
+topicSchema.index({ sectionId: 1, order: 1 });
+topicSchema.index({ roadmapId: 1, order: 1 });
 topicSchema.index({ isCustom: 1, createdBy: 1 });
 
 const Topic = mongoose.model('Topic', topicSchema);

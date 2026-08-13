@@ -7,10 +7,9 @@ import connectDB from './config/db.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 import authRoutes from './routes/authRoutes.js';
-import moduleRoutes from './routes/moduleRoutes.js';
-import topicRoutes from './routes/topicRoutes.js';
-import subTopicRoutes from './routes/subTopicRoutes.js';
+import syllabusRoutes from './routes/syllabusRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
+import detailRoutes from './routes/detailRoutes.js';
 
 dotenv.config();
 
@@ -28,10 +27,9 @@ app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/modules', moduleRoutes);
-app.use('/api/topics', topicRoutes);
-app.use('/api/subtopics', subTopicRoutes);
+app.use('/api/syllabus', syllabusRoutes);
 app.use('/api/progress', progressRoutes);
+app.use('/api/topics', detailRoutes);
 
 app.get('/api/health', (req, res) =>
   res.json({ success: true, message: 'API is running', time: new Date().toISOString() })

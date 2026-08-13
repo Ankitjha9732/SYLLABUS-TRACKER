@@ -28,6 +28,13 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    subject: {
+      type: String,
+      enum: ['mern', 'dsa', 'pcm'],
+      required: [true, 'Subject is required'],
+      lowercase: true,
+      trim: true,
+    },
   },
   {
     timestamps: true,

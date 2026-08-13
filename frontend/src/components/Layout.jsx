@@ -1,76 +1,81 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, GraduationCap } from 'lucide-react';
-import SidebarContent from '../components/Sidebar.jsx';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Check, LayoutDashboard, BookOpenCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useProgress } from '../context/ProgressContext.jsx';
 import { PageLoader } from '../components/Loading.jsx';
+import { SUBJECTS, subjectLabel } from '../components/Sidebar.jsx';
+
+const NAV_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/syllabus', label: 'Syllabus', icon: BookOpenCheck },
+];
+
+const isActive = (pathname, to) => pathname === to;
 
 const Layout = () => {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const { loading } = useAuth();
-  const { loading: progressLoading } = useProgress();
+  const { user, logout, loading } = useAuth();
+  const { pathname } = useLocation();
+  const subject = SUBJECTS[user?.subject] || SUBJECTS.mern;
 
-  if (loading || progressLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 lg:pl-64">
+      <div className="min-h-screen bg-[#F4F9F6] pt-14">
         <PageLoader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 bg-white lg:block">
-        <SidebarContent onNavigate={() => {}} />
-      </aside>
+    <div className="min-h-screen bg-[#F4F9F6]">
+      {/* Top navigation bar */}
+      <header className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-4 border-b border-[#D9E1DC] bg-white px-4 sm:px-6">
+        <NavLink to="/dashboard" className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#16834A] bg-emerald-50/60 text-[#16834A]">
+            <Check className="h-4 w-4" strokeWidth={3} />
+          </span>
+          <span className="hidden text-sm font-bold tracking-tight text-gray-900 min-[420px]:block">Progress Tracker</span>
+        </NavLink>
 
-      {/* Mobile top bar */}
-      <header className="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-white">
-            <GraduationCap className="h-4 w-4" />
-          </div>
-          <span className="text-sm font-bold text-slate-800">SyllabusTracker</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-          aria-label="Open menu"
+        <nav className="flex flex-1 items-center gap-1">
+          {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+            const active = isActive(pathname, to);
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  active ? 'bg-emerald-50 text-[#146B3A]' : 'text-gray-500 hover:bg-[#F4F9F6] hover:text-gray-700'
+                }`}
+              >
+                <Icon className={`h-[18px] w-[18px] ${active ? 'text-[#16834A]' : 'text-gray-400'}`} />
+                {label}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <span
+          className={`hidden shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 sm:inline-flex ${subject.badge}`}
         >
-          <Menu className="h-5 w-5" />
-        </button>
+          {subject.icon ? <subject.icon className="h-3 w-3" /> : null} {subjectLabel(user?.subject)}
+        </span>
+
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#146B3A] to-[#16834A] text-sm font-semibold text-white">
+            {(user?.name || 'U').charAt(0).toUpperCase()}
+          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="flex items-center gap-2 rounded-lg p-2 text-gray-500 transition hover:bg-rose-50 hover:text-rose-600"
+            aria-label="Logout"
+          >
+            <LogOut className="h-[18px] w-[18px]" />
+          </button>
+        </div>
       </header>
 
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {drawerOpen ? (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setDrawerOpen(false)}
-            />
-            <motion.aside
-              className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lift lg:hidden"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'tween', duration: 0.25 }}
-            >
-              <SidebarContent onNavigate={() => setDrawerOpen(false)} />
-            </motion.aside>
-          </>
-        ) : null}
-      </AnimatePresence>
-
       {/* Main content */}
-      <main className="pt-14 lg:pl-64 lg:pt-0">
+      <main className="pt-14">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
           <Outlet />
         </div>

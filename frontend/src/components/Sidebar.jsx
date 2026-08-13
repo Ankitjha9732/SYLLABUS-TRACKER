@@ -1,30 +1,35 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  BookOpen,
-  TrendingUp,
-  StickyNote,
-  Settings,
+  BookOpenCheck,
   LogOut,
   GraduationCap,
   X,
+  Code2,
+  BrainCircuit,
+  Atom,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/syllabus', label: 'Syllabus', icon: BookOpen },
-  { to: '/progress', label: 'Progress', icon: TrendingUp },
-  { to: '/notes', label: 'Notes', icon: StickyNote },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/syllabus', label: 'Syllabus', icon: BookOpenCheck },
 ];
 
-const isActive = (pathname, to) =>
-  pathname === to || (to === '/syllabus' && pathname.startsWith('/syllabus'));
+export const SUBJECTS = {
+  mern: { label: 'MERN Stack', icon: Code2, badge: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
+  dsa: { label: 'DSA', icon: BrainCircuit, badge: 'bg-teal-50 text-teal-700 ring-teal-200' },
+  pcm: { label: 'PCM', icon: Atom, badge: 'bg-[#F4F9F6] text-[#146B3A] ring-[#16834A]/30' },
+};
+
+export const subjectLabel = (subject) => SUBJECTS[subject]?.label || 'Learning';
+
+const isActive = (pathname, to) => pathname === to;
 
 const SidebarContent = ({ onNavigate }) => {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+  const subject = SUBJECTS[user?.subject] || SUBJECTS.mern;
 
   return (
     <div className="flex h-full flex-col">
@@ -32,9 +37,11 @@ const SidebarContent = ({ onNavigate }) => {
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white">
           <GraduationCap className="h-5 w-5" />
         </div>
-        <div className="pr-2">
-          <p className="text-sm font-bold text-slate-800">SyllabusTracker</p>
-          <p className="text-xs text-slate-400">MERN Progress</p>
+        <div className="min-w-0 pr-2">
+          <p className="truncate text-sm font-bold text-slate-800">ProgressTracker</p>
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ${subject.badge}`}>
+            {subject.icon ? <subject.icon className="h-3 w-3" /> : null} {subject.label}
+          </span>
         </div>
         <button
           type="button"

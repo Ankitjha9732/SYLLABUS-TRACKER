@@ -2,16 +2,13 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
-import { ProgressProvider } from './context/ProgressContext.jsx';
+import { DataProvider } from './context/DataContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Layout from './components/Layout.jsx';
 import { Login, Register } from './pages/Auth.jsx';
 import { Dashboard } from './pages/Dashboard.jsx';
 import { Syllabus } from './pages/Syllabus.jsx';
 import { TopicDetail } from './pages/TopicDetail.jsx';
-import { ProgressPage } from './pages/Progress.jsx';
-import { Notes } from './pages/Notes.jsx';
-import { Settings } from './pages/Settings.jsx';
 
 const PageTransition = ({ children }) => (
   <motion.div
@@ -53,42 +50,10 @@ const AppRoutes = () => (
         }
       />
       <Route
-        path="/syllabus/:moduleId"
-        element={
-          <PageTransition>
-            <Syllabus />
-          </PageTransition>
-        }
-      />
-      <Route
-        path="/topic/:topicId"
+        path="/topics/:topicId"
         element={
           <PageTransition>
             <TopicDetail />
-          </PageTransition>
-        }
-      />
-      <Route
-        path="/progress"
-        element={
-          <PageTransition>
-            <ProgressPage />
-          </PageTransition>
-        }
-      />
-      <Route
-        path="/notes"
-        element={
-          <PageTransition>
-            <Notes />
-          </PageTransition>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <PageTransition>
-            <Settings />
           </PageTransition>
         }
       />
@@ -100,11 +65,11 @@ const AppRoutes = () => (
 const App = () => (
   <ToastProvider>
     <AuthProvider>
-      <ProgressProvider>
+      <DataProvider>
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
-      </ProgressProvider>
+      </DataProvider>
     </AuthProvider>
   </ToastProvider>
 );

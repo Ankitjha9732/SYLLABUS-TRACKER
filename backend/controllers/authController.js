@@ -1,19 +1,56 @@
 import User from '../models/User.js';
+import Roadmap from '../models/Roadmap.js';
 import { generateToken, attachTokenCookie, clearTokenCookie } from '../utils/generateToken.js';
+
+const serializeUser = (user) => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  subject: user.subject,
+  createdAt: user.createdAt,
+});
+
+const createUserSyllabus = async (userId, subject) => {
+  const template = await Roadmap.findOne({ subject, isTemplate: true });
+  if (!template) return null;
+
+  const existing = await Roadmap.findOne({ userId, linked: true, sourceRoadmapId: template._id });
+  if (existing) return existing;
+
+  return Roadmap.create({
+    title: template.title,
+    icon: template.icon,
+    subject: template.subject,
+    description: template.description,
+    userId,
+    isTemplate: false,
+    sourceRoadmapId: template._id,
+    linked: true,
+    order: 0,
+  });
+};
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
 export const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, subject } = req.body;
+
+    if (!subject || !['mern', 'dsa', 'pcm'].includes(subject)) {
+      return res.status(400).json({ success: false, message: 'Subject must be mern, dsa or pcm' });
+    }
 
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists' });
     }
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ name, email, password, subject });
+
+    // Create linked syllabus for the user
+    await createUserSyllabus(user._id, subject);
 
     const token = generateToken(user._id);
     attachTokenCookie(res, token);
@@ -21,7 +58,7 @@ export const registerUser = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Account created successfully',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt },
+      user: serializeUser(user),
     });
   } catch (error) {
     next(error);
@@ -46,7 +83,7 @@ export const loginUser = async (req, res, next) => {
     res.json({
       success: true,
       message: 'Logged in successfully',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt },
+      user: serializeUser(user),
     });
   } catch (error) {
     next(error);
@@ -67,7 +104,7 @@ export const logoutUser = (req, res) => {
 export const getMe = async (req, res) => {
   res.json({
     success: true,
-    user: { id: req.user._id, name: req.user.name, email: req.user.email, role: req.user.role, createdAt: req.user.createdAt },
+    user: serializeUser(req.user),
   });
 };
 
@@ -77,12 +114,12 @@ export const getMe = async (req, res) => {
 export const updateMe = async (req, res, next) => {
   try {
     const { name } = req.body;
-    req.user.name = name;
+    if (name) req.user.name = name;
     await req.user.save();
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: { id: req.user._id, name: req.user.name, email: req.user.email, role: req.user.role, createdAt: req.user.createdAt },
+      user: serializeUser(req.user),
     });
   } catch (error) {
     next(error);

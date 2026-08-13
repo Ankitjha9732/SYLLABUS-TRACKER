@@ -1,66 +1,151 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Flame,
-  BookOpen,
+  Target,
   CheckCircle2,
-  Clock3,
-  CircleDot,
+  Timer,
   ArrowRight,
-  PlayCircle,
-  Sparkles,
+  FileText,
+  Circle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useProgress } from '../context/ProgressContext.jsx';
-import { CircularProgress, StatusBadge } from '../components/ProgressCard.jsx';
+import { useData } from '../context/DataContext.jsx';
+import api from '../services/api.js';
 import ProgressBar from '../components/ProgressBar.jsx';
-import { EmptyState, Spinner } from '../components/Loading.jsx';
-import { timeAgo } from '../utils/index.js';
+import { Spinner } from '../components/Loading.jsx';
+import { SUBJECTS, subjectLabel } from '../components/Sidebar.jsx';
+
+const cardClass = 'rounded-2xl border border-[#D9E1DC] bg-white p-6 shadow-sm';
+
+const CardTitle = ({ children }) => <h2 className="text-base font-semibold text-gray-900">{children}</h2>;
+
+const GreenLink = ({ to, children }) => (
+  <Link
+    to={to}
+    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#146B3A] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f572f] focus:outline-none focus:ring-4 focus:ring-emerald-100"
+  >
+    {children}
+  </Link>
+);
+
+const MiniRing = ({ value, size = 52 }) => {
+  const r = (size - 8) / 2;
+  const c = 2 * Math.PI * r;
+  const off = c * (1 - Math.max(0, Math.min(100, value)) / 100);
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#DDF4E8" strokeWidth="8" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#16834A" strokeWidth="8" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#146B3A]">{value}%</span>
+    </div>
+  );
+};
+
+const StatCard = ({ label, value, sub, icon: Icon, right }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.35 }}
+    className="flex items-center gap-4 rounded-2xl border border-[#D9E1DC] bg-white p-5 shadow-sm transition hover:shadow-md"
+  >
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F4F9F6] text-[#16834A]">
+      <Icon className="h-5 w-5" />
+    </span>
+    <div className="min-w-0 flex-1">
+      <p className="text-2xl font-extrabold leading-none text-gray-900">{value}</p>
+      <p className="mt-1 text-sm font-medium text-gray-500">{label}</p>
+      {sub ? <p className="mt-0.5 truncate text-xs text-gray-400">{sub}</p> : null}
+    </div>
+    {right}
+  </motion.div>
+);
+
+const difficultyClass = (d) =>
+  d === 'easy'
+    ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+    : d === 'hard'
+    ? 'bg-rose-50 text-rose-600 ring-rose-200'
+    : 'bg-amber-50 text-amber-700 ring-amber-200';
 
 export const Dashboard = () => {
   const { user } = useAuth();
-  const { stats, activity, tree } = useProgress();
+  const { syllabus, stats, loading } = useData();
+  const [recent, setRecent] = useState({ notes: [], questions: [], problems: [] });
+  const [recentLoading, setRecentLoading] = useState(true);
 
   const firstName = (user?.name || '').split(' ')[0];
-  const progress = stats?.totals?.overallProgress ?? 0;
+  const subject = SUBJECTS[user?.subject] || SUBJECTS.mern;
+  const subjectText = subjectLabel(user?.subject);
+  const isDSA = user?.subject === 'dsa';
+  const totals = stats?.totals;
+  const progress = totals?.overallProgress ?? 0;
+  const sections = stats?.sectionStats || syllabus?.sections || [];
 
-  const continueLearning = useMemo(() => {
-    if (!tree) return null;
-    let best = null;
-    for (const module of tree.modules) {
-      for (const topic of module.topics) {
-        for (const st of topic.subtopics) {
-          if (st.status === 'in_progress') {
-            if (!best || new Date(st.updatedAt || 0) > new Date(best.sub.updatedAt || 0)) {
-              best = { module, topic, sub: st };
-            }
-          }
-        }
-      }
+  const nextTopic = useMemo(() => {
+    for (const s of syllabus?.sections || []) {
+      if (s.optional) continue;
+      const t = (s.topics || []).find((x) => !x.optional && !x.completed);
+      if (t) return { section: s, topic: t };
     }
-    return best;
-  }, [tree]);
+    return null;
+  }, [syllabus]);
 
-  const recentActivity = useMemo(() => {
-    if (!tree) return [];
-    const done = [];
-    for (const module of tree.modules) {
-      for (const topic of module.topics) {
-        for (const st of topic.subtopics) {
-          if (st.status === 'completed' && st.completedAt) {
-            done.push({ ...st, moduleTitle: module.title, topicTitle: topic.title });
-          }
-        }
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      setRecentLoading(true);
+      try {
+        const { data } = await api.get('/progress');
+        const items = (data?.items || []).slice(0, 8);
+        const meta = new Map(
+          items.map((it) => [
+            String(it.topic?.id),
+            { topic: it.topic?.title, section: it.section?.title },
+          ])
+        );
+        const results = await Promise.all(
+          items
+            .filter((it) => it.topic?.id)
+            .map((it) => api.get(`/topics/${it.topic.id}/detail`).then((r) => r.data).catch(() => null))
+        );
+        if (!alive) return;
+
+        const notes = [];
+        const questions = [];
+        const problems = [];
+        results.forEach((d) => {
+          if (!d) return;
+          const m = meta.get(String(d.topic?._id)) || {};
+          const topicTitle = m.topic || d.topic?.title || 'Topic';
+          (d.notes || []).forEach((n) => notes.push({ ...n, topicTitle }));
+          (d.questions || []).forEach((q) => questions.push({ ...q, topicTitle }));
+          (d.problems || []).forEach((p) => problems.push({ ...p, topicTitle }));
+        });
+        notes.sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+        setRecent({
+          notes: notes.slice(0, 3),
+          questions: questions.slice(0, 3),
+          problems: problems.slice(0, 3),
+        });
+      } catch {
+        /* keep empty states */
+      } finally {
+        if (alive) setRecentLoading(false);
       }
-    }
-    return done.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt)).slice(0, 6);
-  }, [tree]);
+    };
+    load();
+    return () => {
+      alive = false;
+    };
+  }, [user?.id, stats?.totals]);
 
-  if (!stats && !tree) {
+  if (loading || (!stats && !sections.length)) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
+        <div className="flex flex-col items-center gap-3 text-gray-500">
           <Spinner />
           <span className="text-sm">Loading your dashboard...</span>
         </div>
@@ -70,243 +155,301 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-bold text-slate-800">Hi {firstName || 'there'} 👋</h1>
-        <p className="mt-1 text-sm text-slate-500">Here's how your MERN journey is going.</p>
+      {/* Welcome */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-wrap items-end justify-between gap-4"
+      >
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Welcome back, {firstName || 'there'} 👋
+          </h1>
+          <p className="mt-2 text-gray-500">Track your learning progress and keep moving forward.</p>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${subject.badge}`}>
+          {subject.icon ? <subject.icon className="h-3.5 w-3.5" /> : null} {subjectText}
+        </span>
       </motion.div>
 
-      {/* Top metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Completed" value={stats?.totals?.completed ?? 0} sub={stats?.totals ? `${stats.totals.completed} / ${stats.totals.total}` : ''} icon={CheckCircle2} accent="from-emerald-500 to-teal-600" />
-        <MetricCard label="In Progress" value={stats?.totals?.inProgress ?? 0} sub="actively learning" icon={Clock3} accent="from-amber-500 to-orange-600" />
-        <MetricCard label="Not Started" value={stats?.totals?.notStarted ?? 0} sub="waiting for you" icon={CircleDot} accent="from-slate-400 to-slate-600" />
-        <MetricCard label="Total Subtopics" value={stats?.totals?.total ?? 0} sub="across the syllabus" icon={BookOpen} accent="from-brand-500 to-indigo-600" />
+      {/* Metric cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Overall Progress"
+          value={`${progress}%`}
+          sub={`of your ${subjectText} syllabus`}
+          icon={Target}
+          right={<MiniRing value={progress} />}
+        />
+        <StatCard
+          label="Completed Topics"
+          value={totals?.topicsCompleted ?? 0}
+          sub={totals ? `${totals.topicsCompleted} / ${totals.topicsTotal} topics` : ''}
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label="Remaining Topics"
+          value={totals?.notStarted ?? 0}
+          sub={totals ? `${totals.notStarted} topics left` : ''}
+          icon={Timer}
+        />
       </div>
 
+      {/* Overall progress + Continue learning */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Continue learning */}
-        <ContinueCard data={continueLearning} />
-
-        {/* Circular progress */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
+          className={`${cardClass} flex flex-col lg:col-span-2`}
         >
-          <h2 className="text-sm font-semibold text-slate-600">Completion</h2>
-          <div className="mt-4 flex items-center justify-center">
-            <CircularProgress value={progress} label="complete" size={160} stroke={12} />
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-lg font-bold text-emerald-600">{stats?.totals?.completed ?? 0}</p>
-              <p className="text-xs text-slate-500">Done</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-amber-500">{stats?.totals?.inProgress ?? 0}</p>
-              <p className="text-xs text-slate-500">Doing</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-slate-400">{stats?.totals?.notStarted ?? 0}</p>
-              <p className="text-xs text-slate-500">To do</p>
+          <CardTitle>Overall Progress</CardTitle>
+          <div className="mt-4 flex flex-1 items-center rounded-xl bg-[#F4F9F6] p-5">
+            <p className="shrink-0 text-5xl font-extrabold text-[#146B3A]">
+              {progress}
+              <span className="text-3xl">%</span>
+            </p>
+            <div className="ml-6 min-w-0 flex-1">
+              <ProgressBar value={progress} size="lg" />
+              <p className="mt-2 text-xs text-gray-500">
+                {totals?.topicsCompleted ?? 0} of {totals?.topicsTotal ?? 0} topics completed
+              </p>
+              <p className="mt-0.5 text-xs text-gray-400">
+                {totals?.notStarted ?? 0} remaining · {sections.length} sections
+              </p>
             </div>
           </div>
         </motion.div>
 
-        {/* Streak + activity */}
-        <StreakCard activity={activity} />
-      </div>
-
-      {/* Module progress */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-600">Module Progress</h2>
-          <Link to="/syllabus" className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700">
-            View syllabus <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        {tree && tree.modules.length ? (
-          <div className="grid gap-5 md:grid-cols-2">
-            {tree.modules.map((module) => (
-              <ModuleRow key={module._id} module={module} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState title="No modules yet" message="The syllabus appears to be empty." />
-        )}
-      </motion.div>
-
-      {/* Recent completed */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
-      >
-        <h2 className="text-sm font-semibold text-slate-600">Recently Completed</h2>
-        {recentActivity.length ? (
-          <ul className="mt-4 divide-y divide-slate-100">
-            {recentActivity.map((st) => (
-              <li key={`${st._id}-${st.completedAt}`} className="flex items-center justify-between py-3">
-                <Link to={`/topic/${st.topicId}`} className="group flex min-w-0 items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-800 group-hover:text-brand-600">
-                      {st.title}
-                    </p>
-                    <p className="truncate text-xs text-slate-400">
-                      {st.moduleTitle} · {st.topicTitle}
-                    </p>
-                  </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.05 }}
+          className={`${cardClass} flex flex-col`}
+        >
+          <CardTitle>Continue Learning</CardTitle>
+          <div className="mt-4 flex flex-1 flex-col">
+            {nextTopic ? (
+              <>
+                <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-[#146B3A] ring-1 ring-emerald-200">
+                  {nextTopic.section.title}
+                </span>
+                <p className="mt-3 text-lg font-bold text-gray-900">{nextTopic.topic.title}</p>
+                <p className="mt-1 text-xs text-gray-400">Not completed yet</p>
+                <div className="mt-auto pt-5">
+                  <GreenLink to={`/topics/${nextTopic.topic._id}`}>
+                    Continue Learning <ArrowRight className="h-4 w-4" />
+                  </GreenLink>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center py-4 text-center">
+                <CheckCircle2 className="h-10 w-10 text-[#16834A]" />
+                <p className="mt-3 font-semibold text-gray-700">All caught up!</p>
+                <p className="mt-1 text-xs text-gray-400">You&apos;ve completed every topic in your {subjectText} syllabus.</p>
+                <Link to="/syllabus" className="mt-4 text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+                  Review your syllabus →
                 </Link>
-                <span className="ml-3 shrink-0 text-xs text-slate-400">{timeAgo(st.completedAt)}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-4 text-sm text-slate-400">No completions yet — go tackle your first subtopic!</p>
-        )}
-      </motion.div>
-    </div>
-  );
-};
-
-const MetricCard = ({ label, value, sub, icon: Icon, accent }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 14 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.35 }}
-    className="rounded-2xl border border-slate-100 bg-white p-5 shadow-card"
-  >
-    <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-white`}>
-      <Icon className="h-5 w-5" />
-    </div>
-    <p className="text-3xl font-extrabold text-slate-800">{value}</p>
-    <p className="text-sm font-medium text-slate-500">{label}</p>
-    {sub ? <p className="mt-0.5 text-xs text-slate-400">{sub}</p> : null}
-  </motion.div>
-);
-
-const ModuleRow = ({ module }) => (
-  <Link to={`/syllabus/${module._id}`} className="group block rounded-xl border border-slate-100 p-4 transition hover:border-brand-200 hover:bg-brand-50/40">
-    <div className="flex items-center justify-between gap-3">
-      <p className="truncate text-sm font-semibold text-slate-700 group-hover:text-brand-700">
-        {module.title}
-        {module.isCustom ? <span className="ml-1.5 rounded bg-brand-100 px-1.5 py-0.5 text-[10px] font-bold text-brand-600">CUSTOM</span> : null}
-      </p>
-      <span className="shrink-0 text-sm font-bold text-slate-600">{module.progress}%</span>
-    </div>
-    <div className="mt-2.5 flex items-center gap-3">
-      <div className="flex-1">
-        <ProgressBar value={module.progress} size="sm" />
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
-      <span className="shrink-0 text-xs text-slate-400">
-        {module.completed}/{module.total}
-      </span>
-    </div>
-  </Link>
-);
 
-const ContinueCard = ({ data }) => {
-  if (!data) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col rounded-2xl border border-dashed border-brand-200 bg-brand-50/40 p-6"
-      >
-        <h2 className="text-sm font-semibold text-slate-600">Continue Learning</h2>
-        <div className="mt-3 flex flex-1 flex-col items-center justify-center gap-2 text-center">
-          <Sparkles className="h-8 w-8 text-brand-400" />
-          <p className="text-sm font-medium text-slate-700">Nothing in progress yet</p>
-          <p className="text-xs text-slate-400">Pick a subtopic and mark it In Progress to see it here.</p>
-          <Link
-            to="/syllabus"
-            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+      {/* Your Syllabus + Recent Notes */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className={cardClass}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle>Your Syllabus</CardTitle>
+            <Link to="/syllabus" className="text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+              View all →
+            </Link>
+          </div>
+          <div className="mt-4 space-y-3">
+            {sections.length ? (
+              sections.slice(0, 8).map((s) => (
+                <Link
+                  key={s.id || s._id}
+                  to="/syllabus"
+                  className="block rounded-xl border border-[#E6EFE9] p-3 transition hover:border-[#16834A]/40 hover:bg-[#F4F9F6]"
+                >
+                  <div className="mb-1.5 flex items-center justify-between text-sm">
+                    <span className="truncate font-medium text-gray-700">{s.title}</span>
+                    <span className="shrink-0 pl-2 text-xs font-bold text-[#146B3A]">{s.progress}%</span>
+                  </div>
+                  <ProgressBar value={s.progress} size="sm" />
+                </Link>
+              ))
+            ) : (
+              <p className="text-sm text-gray-400">No sections yet.</p>
+            )}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className={cardClass}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle>Recent Notes</CardTitle>
+            <Link to="/syllabus" className="text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+              View all →
+            </Link>
+          </div>
+          <div className="mt-4 space-y-3">
+            {recentLoading ? (
+              <div className="flex items-center justify-center gap-2 py-6 text-xs text-gray-400">
+                <Spinner /> Loading recent activity...
+              </div>
+            ) : recent.notes.length ? (
+              recent.notes.map((n) => (
+                <div key={n._id} className="rounded-xl border border-[#E6EFE9] p-3.5">
+                  <p className="text-[11px] font-semibold text-[#16834A]">{n.topicTitle}</p>
+                  <p className="mt-1 line-clamp-2 text-sm text-gray-600">{n.content}</p>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl bg-[#F4F9F6] p-5 text-center">
+                <FileText className="mx-auto h-8 w-8 text-[#16834A]/50" />
+                <p className="mt-2 text-sm font-medium text-gray-600">No notes yet.</p>
+                <p className="mt-0.5 text-xs text-gray-400">Start saving important concepts while learning.</p>
+                <Link to="/syllabus" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+                  Add a Note →
+                </Link>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Interview Questions + DSA problems / Roadmap */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className={cardClass}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle>Interview Questions</CardTitle>
+            <Link to="/syllabus" className="text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+              View all →
+            </Link>
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            {totals?.questionsCompleted ?? 0} of {totals?.questionsTotal ?? 0} prepared
+          </p>
+          <div className="mt-4 space-y-3">
+            {recentLoading ? (
+              <div className="flex items-center justify-center gap-2 py-6 text-xs text-gray-400">
+                <Spinner /> Loading...
+              </div>
+            ) : recent.questions.length ? (
+              recent.questions.map((q) => (
+                <div key={q._id} className="flex items-start gap-3 rounded-xl border border-[#E6EFE9] p-3.5">
+                  {q.completed ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#16834A]" />
+                  ) : (
+                    <Circle className="mt-0.5 h-4 w-4 shrink-0 text-gray-300" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-[#16834A]">{q.topicTitle}</p>
+                    <p className="mt-0.5 text-sm text-gray-700">{q.question}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl bg-[#F4F9F6] p-5 text-center">
+                <p className="text-sm font-medium text-gray-600">No questions yet.</p>
+                <p className="mt-0.5 text-xs text-gray-400">Save important interview questions while learning.</p>
+                <Link to="/syllabus" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+                  Add a Question →
+                </Link>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {isDSA ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className={cardClass}
           >
-            Explore syllabus <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </motion.div>
-    );
-  }
-
-  const { module, topic, sub } = data;
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
-    >
-      <h2 className="text-sm font-semibold text-slate-600">Continue Learning</h2>
-      <div className="mt-4 flex-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-brand-500">{module.title}</p>
-        <p className="mt-0.5 text-lg font-bold text-slate-800">{topic.title}</p>
-        <p className="text-sm text-slate-500">{sub.title}</p>
-      </div>
-      <div className="mt-4 flex items-center justify-between">
-        <StatusBadge status={sub.status} />
-        <span className="text-xs text-slate-400">{timeAgo(sub.updatedAt)}</span>
-      </div>
-      <Link
-        to={`/topic/${topic._id}`}
-        className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
-      >
-        <PlayCircle className="h-4 w-4" /> Continue Learning
-      </Link>
-    </motion.div>
-  );
-};
-
-const Heatmap = ({ data }) => {
-  if (!data || !data.length) return null;
-  const max = Math.max(1, ...data.map((d) => d.count));
-  const level = (count) => {
-    if (count === 0) return 'bg-slate-100';
-    const r = count / max;
-    if (r < 0.35) return 'bg-brand-100';
-    if (r < 0.7) return 'bg-brand-300';
-    return 'bg-brand-500';
-  };
-  return (
-    <div className="mt-3">
-      <div className="mb-1 flex items-center justify-between text-xs text-slate-400">
-        <span>{data.length} days of activity</span>
-        <span className="flex items-center gap-1">
-          less
-          {['bg-slate-100', 'bg-brand-100', 'bg-brand-300', 'bg-brand-500'].map((c) => (
-            <span key={c} className={`h-2.5 w-2.5 rounded-sm ${c}`} />
-          ))}
-          more
-        </span>
-      </div>
-      <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(17, minmax(0, 1fr))' }}>
-        {data.map((d) => (
-          <div key={d.date} title={`${d.date} · ${d.count} activities`} className={`aspect-square rounded-[3px] ${level(d.count)}`} />
-        ))}
+            <div className="flex items-center justify-between">
+              <CardTitle>Important Problems</CardTitle>
+              <Link to="/syllabus" className="text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+                View all →
+              </Link>
+            </div>
+            <p className="mt-1 text-xs text-gray-400">
+              Solved: {totals?.problemsSolved ?? 0} / {totals?.problemsTotal ?? 0}
+            </p>
+            <div className="mt-4 space-y-3">
+              {recentLoading ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-xs text-gray-400">
+                  <Spinner /> Loading...
+                </div>
+              ) : recent.problems.length ? (
+                recent.problems.map((p) => (
+                  <div key={p._id} className="flex items-center gap-3 rounded-xl border border-[#E6EFE9] p-3.5">
+                    {p.completed ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-[#16834A]" />
+                    ) : (
+                      <Circle className="h-4 w-4 shrink-0 text-gray-300" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-gray-700">{p.title}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold text-[#16834A]">{p.topicTitle}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${difficultyClass(p.difficulty)}`}>
+                      {p.difficulty}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl bg-[#F4F9F6] p-5 text-center">
+                  <p className="text-sm font-medium text-gray-600">No problems yet.</p>
+                  <p className="mt-0.5 text-xs text-gray-400">Track important DSA problems here.</p>
+                  <Link to="/syllabus" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+                    Add a Problem →
+                  </Link>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className={`${cardClass} flex flex-col`}
+          >
+            <CardTitle>Your Roadmap</CardTitle>
+            <div className="mt-4 flex-1">
+              <p className="text-lg font-bold text-gray-900">{syllabus?.roadmap?.title || subjectText}</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-400">
+                {syllabus?.roadmap?.description || 'Follow the sections in order to keep your progress consistent.'}
+              </p>
+              <p className="mt-3 text-xs text-gray-400">
+                {totals?.topicsTotal ?? 0} topics across {sections.length} sections
+              </p>
+            </div>
+            <div className="mt-5">
+              <GreenLink to="/syllabus">
+                Open Syllabus <ArrowRight className="h-4 w-4" />
+              </GreenLink>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
 };
-
-const StreakCard = ({ activity = null }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.96 }}
-    animate={{ opacity: 1, scale: 1 }}
-    className="rounded-2xl border border-slate-100 bg-white p-6 shadow-card"
-  >
-    <div className="flex items-center justify-between">
-      <h2 className="text-sm font-semibold text-slate-600">Learning Streak</h2>
-      <Flame className="h-5 w-5 text-orange-500" />
-    </div>
-    <div className="mt-2 flex items-end justify-center gap-2">
-      <span className="text-6xl font-extrabold text-slate-800">{activity?.streak?.current ?? 0}</span>
-      <span className="mb-2 text-sm font-medium text-slate-500">day streak</span>
-    </div>
-    <p className="text-center text-xs text-slate-400">Longest: {activity?.streak?.longest ?? 0} days</p>
-    {activity?.heatmap?.length ? <Heatmap data={activity.heatmap} /> : null}
-  </motion.div>
-);

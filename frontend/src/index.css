@@ -8,7 +8,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
   body {
-    @apply bg-slate-50 text-slate-800;
+    @apply bg-[#F4F9F6] text-gray-800;
   }
   ::selection {
     @apply bg-brand-200 text-brand-900;

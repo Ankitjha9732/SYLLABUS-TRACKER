@@ -19,7 +19,7 @@ export const CircularProgress = ({ value = 0, size = 140, stroke = 10, label = '
           r={radius}
           fill="none"
           stroke="currentColor"
-          className="text-slate-100"
+          className="text-[#DDF4E8]"
           strokeWidth={stroke}
         />
         <motion.circle

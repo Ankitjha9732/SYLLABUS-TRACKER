@@ -29,6 +29,11 @@ const subTopicSchema = new mongoose.Schema(
       ref: 'Topic',
       required: [true, 'SubTopic must belong to a topic'],
     },
+    roadmapId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Roadmap',
+      default: null,
+    },
     title: {
       type: String,
       required: [true, 'SubTopic title is required'],

@@ -37,6 +37,13 @@ export const DIFFICULTY_META = {
   hard: { label: 'Hard', className: 'text-rose-600 bg-rose-50 border-rose-200' },
 };
 
+export const statusDot = (status) =>
+  status === 'completed'
+    ? 'h-2 w-2 shrink-0 rounded-full bg-emerald-500'
+    : status === 'in_progress'
+    ? 'h-2 w-2 shrink-0 rounded-full bg-amber-400'
+    : 'h-2 w-2 shrink-0 rounded-full border border-slate-300 bg-white';
+
 export const STATUS_ORDER = [STATUS.NOT_STARTED, STATUS.IN_PROGRESS, STATUS.COMPLETED];
 
 // Next status when cycling (submit-topic usage: go up one level).
@@ -83,3 +90,29 @@ export const initials = (name = '') =>
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
     .join('');
+
+export const fieldName = (fields = [], slug = '') => {
+  const match = fields.find((f) => f.slug === slug);
+  return match ? match.name : slug;
+};
+
+export const fieldIcon = (fields = [], slug = '') => {
+  const match = fields.find((f) => f.slug === slug);
+  return match ? match.icon : 'Map';
+};
+
+export const toLocalDate = (date = new Date()) => {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+export const formatDuration = (minutes) => {
+  if (!minutes) return '0m';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+};

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const progressSchema = new mongoose.Schema(
+const questionSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -12,18 +12,15 @@ const progressSchema = new mongoose.Schema(
       ref: 'Topic',
       required: true,
     },
-    roadmapId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Roadmap',
-      default: null,
+    question: {
+      type: String,
+      required: [true, 'Question is required'],
+      trim: true,
+      maxlength: [500, 'Question cannot exceed 500 characters'],
     },
     completed: {
       type: Boolean,
       default: false,
-    },
-    completedAt: {
-      type: Date,
-      default: null,
     },
   },
   {
@@ -31,8 +28,8 @@ const progressSchema = new mongoose.Schema(
   }
 );
 
-progressSchema.index({ userId: 1, topicId: 1 }, { unique: true });
+questionSchema.index({ userId: 1, topicId: 1, createdAt: 1 });
 
-const Progress = mongoose.model('Progress', progressSchema);
+const Question = mongoose.model('Question', questionSchema);
 
-export default Progress;
+export default Question;
