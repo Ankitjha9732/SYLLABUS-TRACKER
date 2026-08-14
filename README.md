@@ -86,7 +86,7 @@ cp .env.example .env        # optional: point VITE_API_URL at your backend
 npm run dev                 # http://localhost:5173
 ```
 
-Open http://localhost:5173 → register → the seeded syllabus appears on the Syllabus page.
+Open https://syllabus-tracker-beta.vercel.app/ → register → the seeded syllabus appears on the Syllabus page.
 
 ### Deploying
 
