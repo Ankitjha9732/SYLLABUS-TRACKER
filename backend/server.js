@@ -17,9 +17,20 @@ connectDB();
 
 const app = express();
 
+const normalizeOrigin = (s) => String(s || '').trim().replace(/\/+$/, '');
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map(normalizeOrigin)
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin(origin, callback) {
+      // Allow requests with no origin (curl, Postman, same-origin) and any listed origin.
+      // Origins are normalized so a trailing slash cannot cause a CORS mismatch.
+      if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, true);
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
   })
 );
