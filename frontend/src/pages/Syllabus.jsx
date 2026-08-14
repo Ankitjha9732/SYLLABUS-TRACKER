@@ -247,7 +247,7 @@ const SectionBlock = ({ section, index, onAddTopic, onToggle, onSectionTick, onE
       transition={{ duration: 0.25, delay: index * 0.03 }}
       className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-card"
     >
-      <div className="flex items-center gap-3 px-5 py-4">
+      <div className="flex flex-wrap items-center gap-2.5 px-3.5 py-3.5 sm:gap-3 sm:px-5 sm:py-4">
         <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
           {open ? <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" /> : <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />}
           <div className="min-w-0">
@@ -290,9 +290,9 @@ const SectionBlock = ({ section, index, onAddTopic, onToggle, onSectionTick, onE
         <button
           type="button"
           onClick={onAddTopic}
-          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50"
+          className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-semibold text-brand-600 transition hover:bg-brand-50"
         >
-          <Plus className="h-3.5 w-3.5" /> Topic
+          <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Topic</span>
         </button>
       </div>
 

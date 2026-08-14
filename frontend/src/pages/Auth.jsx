@@ -48,17 +48,53 @@ const Logo = () => (
   </div>
 );
 
+const MOBILE_FEATURES = [
+  { icon: CheckCircle2, label: 'Progress tracking' },
+  { icon: NotebookPen, label: 'Notes & questions' },
+  { icon: BookOpenCheck, label: 'Syllabus planner' },
+  { icon: GraduationCap, label: 'MERN · DSA · PCM' },
+];
+
+const MobileIntroContent = () => (
+  <>
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#16834A] to-[#0f572f] text-white">
+      <GraduationCap className="h-5 w-5" />
+    </div>
+
+    <p className="mt-3 text-xl font-extrabold leading-snug text-gray-900">
+      Your learning, <span className="text-[#16834A]">tracked in one place</span>
+    </p>
+    <p className="mt-2 text-[13px] leading-relaxed text-gray-500">
+      Plan your MERN, DSA &amp; PCM syllabus, mark topics complete, and keep notes and interview questions together.
+    </p>
+
+    <div className="mt-4 grid grid-cols-2 gap-2">
+      {MOBILE_FEATURES.map(({ icon: Icon, label }) => (
+        <div key={label} className="flex items-center gap-2 rounded-xl bg-[#F4F9F6] px-3 py-2.5">
+          <Icon className="h-4 w-4 shrink-0 text-[#16834A]" />
+          <span className="text-xs font-semibold text-gray-700">{label}</span>
+        </div>
+      ))}
+    </div>
+  </>
+);
+
 const AuthShell = ({ mode, heading, subtitle, footer, children }) => (
-  <div className="flex min-h-screen items-center justify-center bg-[#f8faf9] px-4 py-4 sm:px-8">
+  <div className="flex min-h-safe flex-col items-center justify-center gap-4 bg-[#f8faf9] px-4 py-4 sm:px-8">
+    {/* MOBILE — separate introduction card */}
+    <div className="w-full max-w-[480px] rounded-[1.75rem] border border-[#E6EFE9] bg-white p-6 shadow-[0_12px_40px_rgba(20,107,58,0.06)] sm:p-7 lg:hidden">
+      <MobileIntroContent />
+    </div>
+
     <motion.div
       key={mode}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="flex w-full max-w-[1180px] overflow-hidden rounded-[2.5rem] border border-[#E6EFE9] bg-white shadow-[0_24px_80px_rgba(20,107,58,0.08)] lg:h-[min(700px,calc(100vh-2rem))]"
+      className="flex w-full max-w-[480px] flex-col overflow-hidden rounded-[2.5rem] border border-[#E6EFE9] bg-white shadow-[0_24px_80px_rgba(20,107,58,0.08)] lg:max-w-[1180px] lg:flex-row lg:h-[min(700px,calc(100dvh-2rem))]"
     >
       {/* LEFT — authentication form */}
-      <div className="flex w-full flex-col lg:w-[40%]">
+      <div className="flex w-full flex-col lg:w-[40%] lg:overflow-y-auto">
         <div className="mx-auto w-full max-w-[510px] px-7 sm:px-10 lg:px-4">
           <div className="pt-6">
             <Logo />

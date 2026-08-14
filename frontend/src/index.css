@@ -13,9 +13,19 @@
   ::selection {
     @apply bg-brand-200 text-brand-900;
   }
+  img,
+  svg,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 @layer utilities {
+  .min-h-safe {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
   .scrollbar-thin::-webkit-scrollbar {
     height: 6px;
     width: 6px;
