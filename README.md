@@ -90,10 +90,11 @@ Open http://localhost:5173 → register → the seeded syllabus appears on the S
 
 ### Deploying
 
-- **Frontend** → Vercel (`frontend/` as root, set `VITE_API_URL`).
-- **Backend** → Render (`backend/` as root, set env vars, run seed once).
+- **Frontend** → Vercel (`frontend/` as root). Vercel auto-detects Vite and the included `vercel.json` rewrites all routes to `index.html`, so React Router deep links work. Set `VITE_API_URL` in Vercel's Environment Variables (available at build time).
+- **Backend** → Render Web Service (`backend/` as root): set `NODE_ENV=production`, `CLIENT_URL` (the frontend origin), `MONGO_URI`, `JWT_SECRET`; run seed once.
 - **Database** → MongoDB Atlas (set `MONGO_URI`).
 - For production, ensure `NODE_ENV=production`, the JWT secret is strong, and cookies are `Secure` + `SameSite=None`.
+- If you'd rather deploy the frontend on Render too, use the included `frontend/server.js` (`npm start`) and the `render.yaml` Blueprint.
 
 ---
 

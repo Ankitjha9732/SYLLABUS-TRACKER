@@ -1,0 +1,35 @@
+services:
+  # Backend API — Node/Express + MongoDB
+  - type: web
+    name: syllabus-tracker-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: CLIENT_URL
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 30d
+
+  # Frontend — Vite build served as a Web Service with SPA fallback
+  - type: web
+    name: syllabus-tracker-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: PORT
+        value: 3000
