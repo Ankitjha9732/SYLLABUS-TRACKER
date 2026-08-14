@@ -13,31 +13,34 @@ dotenv.config();
  */
 const createTemplate = async (tpl) => {
   const expectedSections = tpl.sections.filter((s) => !s.optional).length;
+  const expectedTopics = tpl.sections.reduce((n, s) => n + (s.topics || []).length, 0);
   let existing = await Roadmap.findOne({ subject: tpl.subject, title: tpl.title, isTemplate: true, linked: { $ne: true } });
 
+  let roadmap = existing;
+
   if (existing) {
-    const sectionCount = await Section.countDocuments({ roadmapId: existing._id, optional: false });
-    const matches = sectionCount === expectedSections;
+    const sectionCount = await Section.countDocuments({ roadmapId: existing._id, optional: false, createdBy: null });
+    const topicCount = await Topic.countDocuments({ roadmapId: existing._id, createdBy: null });
+    const matches = sectionCount === expectedSections && topicCount === expectedTopics;
     if (matches) {
       console.log(`  Template "${tpl.title}" already seeded, skipping`);
       return existing;
     }
-    console.log(`  Template "${tpl.title}" found with old structure (${sectionCount} sections), rebuilding...`);
-    const sectionIds = await Section.find({ roadmapId: existing._id }).distinct('_id');
-    const topicIds = await Topic.find({ roadmapId: existing._id }).distinct('_id');
-    await Topic.deleteMany({ _id: { $in: topicIds } });
-    await Section.deleteMany({ _id: { $in: sectionIds } });
-    await existing.deleteOne();
+    console.log(
+      `  Template "${tpl.title}" found with old content (${sectionCount} sections / ${topicCount} topics), restoring...`
+    );
+    await Section.deleteMany({ roadmapId: existing._id, createdBy: null });
+    await Topic.deleteMany({ roadmapId: existing._id, createdBy: null });
+  } else {
+    roadmap = await Roadmap.create({
+      title: tpl.title,
+      icon: tpl.icon || 'Map',
+      subject: tpl.subject,
+      description: tpl.description || '',
+      isTemplate: true,
+      ownerId: null,
+    });
   }
-
-  const roadmap = await Roadmap.create({
-    title: tpl.title,
-    icon: tpl.icon || 'Map',
-    subject: tpl.subject,
-    description: tpl.description || '',
-    isTemplate: true,
-    ownerId: null,
-  });
 
   let sectionCount = 0;
   let topicCount = 0;

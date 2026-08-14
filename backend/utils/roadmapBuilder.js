@@ -2,6 +2,7 @@ import Roadmap from '../models/Roadmap.js';
 import Section from '../models/Section.js';
 import Topic from '../models/Topic.js';
 import Progress from '../models/Progress.js';
+import User from '../models/User.js';
 
 /**
  * Resolves the roadmap that owns content for a given roadmap.
@@ -14,19 +15,39 @@ const contentRoadmapId = (roadmap) =>
 const visibilityFilter = (userId) => ({ $or: [{ createdBy: null }, { createdBy: userId }] });
 
 /**
+ * Returns the sets of section/topic ids the user has removed from their own
+ * syllabus. Deletion is a per-user soft-delete so the shared template content
+ * is never touched.
+ */
+export const getHiddenIds = async (userId) => {
+  const user = await User.findById(userId).select('hiddenSectionIds hiddenTopicIds').lean();
+  return {
+    sections: new Set((user?.hiddenSectionIds || []).map(String)),
+    topics: new Set((user?.hiddenTopicIds || []).map(String)),
+  };
+};
+
+/**
  * Builds the Section -> Topic tree for a single roadmap and merges the given
  * user's topic-level progress. Optional (advanced) content is included but
- * excluded from totals so it never counts toward progress.
+ * excluded from totals so it never counts toward progress. Sections and topics
+ * the user deleted from their own syllabus are excluded.
  */
 export const buildRoadmapTree = async (userId, roadmap) => {
   const contentId = contentRoadmapId(roadmap);
   const visibility = visibilityFilter(userId);
+  const hidden = await getHiddenIds(userId);
 
-  const [sections, topics, progress] = await Promise.all([
+  const [rawSections, rawTopics, progress] = await Promise.all([
     Section.find({ roadmapId: contentId, ...visibility }).sort({ order: 1, createdAt: 1 }).lean(),
     Topic.find({ roadmapId: contentId, ...visibility }).sort({ order: 1, createdAt: 1 }).lean(),
     Progress.find({ userId }).select('topicId completed completedAt').lean(),
   ]);
+
+  const sections = rawSections.filter((s) => !hidden.sections.has(String(s._id)));
+  const topics = rawTopics.filter(
+    (t) => !hidden.topics.has(String(t._id)) && !hidden.sections.has(String(t.sectionId))
+  );
 
   const progressMap = new Map(progress.map((p) => [String(p.topicId), p]));
   const topicMap = new Map(

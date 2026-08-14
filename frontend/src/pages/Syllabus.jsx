@@ -279,16 +279,14 @@ const SectionBlock = ({ section, index, onAddTopic, onToggle, onSectionTick, onE
             onClick={() => onSectionTick(section)}
           />
         ) : null}
-        {section.createdBy ? (
-          <button
-            type="button"
-            onClick={() => onDeleteSection(section)}
-            className="inline-flex shrink-0 items-center rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
-            aria-label={`Delete section ${section.title}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => onDeleteSection(section)}
+          className="inline-flex shrink-0 items-center rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+          aria-label={`Delete section ${section.title}`}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
         <button
           type="button"
           onClick={onAddTopic}

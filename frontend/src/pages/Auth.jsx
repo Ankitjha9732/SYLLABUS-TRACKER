@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, MotionConfig } from 'framer-motion';
 import {
   Check,
   CheckCircle2,
   GraduationCap,
   NotebookPen,
-  Target,
-  ArrowUpRight,
-  BarChart3,
+  BookOpenCheck,
+  Home,
+  Bookmark,
+  CalendarDays,
+  Leaf,
   Code,
   Network,
   Atom,
@@ -20,7 +22,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  ChevronRight,
   ChevronDown,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -54,7 +55,7 @@ const AuthShell = ({ mode, heading, subtitle, footer, children }) => (
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="flex w-full max-w-[1180px] overflow-hidden rounded-[2.5rem] border border-[#E6EFE9] bg-white shadow-[0_24px_80px_rgba(20,107,58,0.08)] lg:min-h-[min(700px,calc(100vh-2rem))]"
+      className="flex w-full max-w-[1180px] overflow-hidden rounded-[2.5rem] border border-[#E6EFE9] bg-white shadow-[0_24px_80px_rgba(20,107,58,0.08)] lg:h-[min(700px,calc(100vh-2rem))]"
     >
       {/* LEFT — authentication form */}
       <div className="flex w-full flex-col lg:w-[40%]">
@@ -322,154 +323,279 @@ const CircleProgress = ({ percent }) => {
   );
 };
 
-const SubjectRow = ({ icon: Icon, name, percent }) => (
-  <div className="flex items-center gap-3">
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-[#16834A]">
-      <Icon className="h-4 w-4" />
-    </span>
-    <div className="min-w-0 flex-1">
-      <div className="mb-1.5 flex items-center justify-between text-[13px]">
-        <span className="font-semibold text-gray-700">{name}</span>
-        <span className="font-bold text-[#146B3A]">{percent}%</span>
-      </div>
-      <div className="h-1.5 w-full rounded-full bg-emerald-100">
-        <div className="h-1.5 rounded-full bg-[#16834A]" style={{ width: `${percent}%` }} />
-      </div>
-    </div>
-    <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" />
-  </div>
-);
-
-const ChecklistCard = () => (
+const Float = ({ children, amplitude = 6, duration = 5, delay = 0, className }) => (
   <motion.div
-    animate={{ y: [0, -6, 0] }}
-    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-    className="absolute left-4 top-8 z-10 w-[190px] rounded-2xl border border-[#E6EFE9] bg-white p-4 shadow-lg shadow-emerald-100/50"
+    className={className}
+    animate={{ y: [0, -amplitude, 0] }}
+    transition={{ duration, delay, repeat: Infinity, repeatType: 'loop', ease: ['easeInOut', 'easeInOut'] }}
+    style={{ willChange: 'transform' }}
   >
-    <p className="mb-3 text-xs font-bold text-gray-800">Today&apos;s Tasks</p>
-    {['Arrays practice', 'REST API notes', 'DSA problem #3'].map((t) => (
-      <div key={t} className="mb-2.5 flex items-center gap-2 last:mb-0">
-        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#16834A]" />
-        <span className="truncate text-[11px] text-gray-500">{t}</span>
-      </div>
-    ))}
+    {children}
   </motion.div>
 );
 
-const OpenNotebook = () => (
-  <motion.div
-    animate={{ y: [0, 6, 0] }}
-    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-    className="absolute bottom-14 left-8 z-10 w-[150px] rounded-xl border border-[#E6EFE9] bg-white p-3 shadow-lg shadow-emerald-100/50"
-  >
-    <div className="flex items-center gap-2">
-      <NotebookPen className="h-4 w-4 text-[#16834A]" />
-      <span className="text-[11px] font-semibold text-gray-600">Learning Notes</span>
+const FloatingCard = ({ className, amplitude, duration, delay, cardClassName = '', children }) => (
+  <Float amplitude={amplitude} duration={duration} delay={delay} className={`absolute z-20 select-none ${className}`}>
+    <motion.div
+      whileHover={{ scale: 1.04, y: -4 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      style={{ willChange: 'transform' }}
+      className={`rounded-2xl border border-[#E6EFE9] bg-white shadow-lg shadow-emerald-100/50 transition-shadow duration-300 hover:shadow-xl hover:shadow-emerald-100/70 ${cardClassName}`}
+    >
+      {children}
+    </motion.div>
+  </Float>
+);
+
+const SkillBar = ({ name, percent, delay = 0.35 }) => (
+  <div className="flex items-center gap-2.5">
+    <span className="w-[78px] shrink-0 truncate text-[11px] font-semibold text-gray-700">{name}</span>
+    <div className="h-2 flex-1 overflow-hidden rounded-full bg-emerald-100">
+      <motion.div
+        className="h-2 rounded-full bg-[#16834A]"
+        initial={{ width: 0 }}
+        animate={{ width: `${percent}%` }}
+        transition={{ duration: 1, delay, ease: 'easeOut' }}
+      />
     </div>
-    <div className="mt-2 space-y-1.5">
+    <span className="w-9 shrink-0 text-right text-[11px] font-bold text-[#146B3A]">{percent}%</span>
+  </div>
+);
+
+const SIDEBAR_ITEMS = [
+  { Icon: Home, active: true },
+  { Icon: CheckCircle2, active: false },
+  { Icon: BookOpenCheck, active: false },
+  { Icon: Bookmark, active: false },
+];
+
+const SyllabusMockup = () => (
+  <motion.div
+    initial={{ opacity: 0, y: 14 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, ease: 'easeOut' }}
+    className="relative z-10 flex w-full overflow-hidden rounded-[1.6rem] border border-[#E6EFE9] bg-white shadow-[0_18px_50px_rgba(20,107,58,0.12)]"
+  >
+    {/* mini sidebar */}
+    <div className="flex w-11 shrink-0 flex-col items-center gap-1.5 border-r border-[#F0F4F1] bg-[#FBFDFC] py-4">
+      <span className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-[#16834A] text-white">
+        <BookOpenCheck className="h-3.5 w-3.5" />
+      </span>
+      {SIDEBAR_ITEMS.map(({ Icon, active }, i) => (
+        <span
+          key={i}
+          className={`flex h-7 w-7 items-center justify-center rounded-lg transition ${
+            active ? 'bg-emerald-50 text-[#16834A]' : 'text-[#C7D6CD]'
+          }`}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+      ))}
+    </div>
+
+    {/* mockup content */}
+    <div className="min-w-0 flex-1 p-5">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-[#16834A]">
+          <BookOpenCheck className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[14px] font-bold leading-tight text-gray-900">Syllabus Tracker</p>
+          <p className="text-[10px] font-medium text-gray-400">Track. Learn. Improve.</p>
+        </div>
+      </div>
+
+      {/* overall progress */}
+      <div className="mt-3.5 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold text-gray-500">Overall Progress</p>
+          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-emerald-100">
+            <motion.div
+              className="h-2 rounded-full bg-[#16834A]"
+              initial={{ width: 0 }}
+              animate={{ width: '72%' }}
+              transition={{ duration: 1, delay: 0.15, ease: 'easeOut' }}
+            />
+          </div>
+          <p className="mt-1.5 text-[10px] font-semibold text-gray-500">72% Completed</p>
+        </div>
+        <CircleProgress percent={72} />
+      </div>
+
+      {/* syllabus */}
+      <div className="mt-3 border-t border-[#F0F4F1] pt-3">
+        <p className="mb-2 text-[11px] font-semibold text-gray-500">My Syllabus</p>
+        <div className="space-y-[7px]">
+          <SkillBar name="React" percent={80} delay={0.3} />
+          <SkillBar name="JavaScript" percent={65} delay={0.4} />
+          <SkillBar name="DSA" percent={55} delay={0.5} />
+          <SkillBar name="Physics" percent={40} delay={0.6} />
+          <SkillBar name="Chemistry" percent={28} delay={0.7} />
+        </div>
+      </div>
+    </div>
+  </motion.div>
+);
+
+const TodayPlanCard = () => (
+  <FloatingCard
+    amplitude={6}
+    duration={5.4}
+    delay={0.2}
+    className="right-4 top-1 lg:right-8"
+    cardClassName="w-[150px] p-3"
+  >
+    <p className="mb-1.5 text-[11px] font-bold text-gray-800">Today&apos;s Plan</p>
+    {[
+      { label: 'React Hooks', done: true },
+      { label: 'Context API', done: true },
+      { label: 'React Router', done: false },
+      { label: 'State Management', done: false },
+    ].map((item) => (
+      <div key={item.label} className="mb-[3px] flex items-center gap-1.5 last:mb-0">
+        {item.done ? (
+          <CheckCircle2 className="h-3 w-3 shrink-0 text-[#16834A]" />
+        ) : (
+          <span className="h-3 w-3 shrink-0 rounded-[4px] border border-[#C7D6CD]" />
+        )}
+        <span className={`truncate text-[10px] ${item.done ? 'text-gray-500' : 'text-gray-400'}`}>{item.label}</span>
+      </div>
+    ))}
+  </FloatingCard>
+);
+
+const OpenNotebook = () => (
+  <FloatingCard
+    amplitude={-5}
+    duration={6}
+    delay={0.35}
+    className="left-4 bottom-2 lg:left-10"
+    cardClassName="w-[140px] p-3"
+  >
+    <div className="flex items-center gap-1.5">
+      <NotebookPen className="h-3.5 w-3.5 text-[#16834A]" />
+      <span className="text-[10px] font-semibold text-gray-600">Learning Notes</span>
+    </div>
+    <div className="mt-1.5 space-y-1">
       <div className="h-1.5 w-4/5 rounded-full bg-gray-200" />
       <div className="h-1.5 w-full rounded-full bg-gray-100" />
       <div className="h-1.5 w-3/5 rounded-full bg-gray-100" />
     </div>
-  </motion.div>
+  </FloatingCard>
 );
 
-const TargetBadge = () => (
-  <motion.div
-    animate={{ y: [0, -5, 0] }}
-    transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-    className="absolute right-8 top-10 z-10 flex items-center gap-1.5 rounded-full border border-[#E6EFE9] bg-white px-3.5 py-2 shadow-lg shadow-emerald-100/50"
+const CalendarChip = () => (
+  <FloatingCard
+    amplitude={6}
+    duration={5.2}
+    delay={0.1}
+    className="left-4 top-2 lg:left-10"
+    cardClassName="flex items-center gap-2 px-3 py-2"
   >
-    <Target className="h-5 w-5 text-[#146B3A]" />
-    <ArrowUpRight className="h-4 w-4 text-[#16834A]" />
-  </motion.div>
+    <CalendarDays className="h-4 w-4 text-[#16834A]" />
+    <span className="text-[10px] font-semibold text-gray-700">8 study days</span>
+  </FloatingCard>
 );
 
-const BooksCap = () => (
-  <motion.div
-    animate={{ y: [0, -5, 0] }}
-    transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
-    className="absolute bottom-10 right-10 z-10 flex flex-col items-center"
+const GradCapChip = () => (
+  <FloatingCard
+    amplitude={4}
+    duration={6.2}
+    delay={0.15}
+    className="left-1/2 -ml-[18px] top-0"
+    cardClassName="flex h-9 w-9 items-center justify-center"
   >
-    <GraduationCap className="mb-1 h-7 w-7 text-[#146B3A]" />
-    <div className="flex flex-col items-center space-y-1">
-      <div className="h-2 w-16 rounded bg-[#146B3A]" />
-      <div className="h-2 w-11 rounded bg-[#16834A]" />
-      <div className="h-2 w-20 rounded bg-[#a8c6b6]" />
+    <GraduationCap className="h-5 w-5 text-[#146B3A]" />
+  </FloatingCard>
+);
+
+const BooksStack = () => (
+  <FloatingCard
+    amplitude={5}
+    duration={5.6}
+    delay={0.5}
+    className="right-4 bottom-1 lg:right-8"
+    cardClassName="px-3 py-2"
+  >
+    <div className="flex flex-col items-start">
+      <div className="h-2 w-14 rounded bg-[#a8c6b6]" />
+      <div className="h-2 w-11 -translate-y-0.5 rounded bg-[#16834A]" />
+      <div className="h-2 w-16 -translate-y-1 rounded bg-[#146B3A]" />
     </div>
-  </motion.div>
+  </FloatingCard>
+);
+
+const PlantChip = () => (
+  <FloatingCard
+    amplitude={5}
+    duration={5.8}
+    delay={0.4}
+    className="bottom-0 left-1/2 -ml-[40px]"
+    cardClassName="flex items-center gap-1.5 px-3 py-1.5"
+  >
+    <Leaf className="h-3.5 w-3.5 text-[#16834A]" />
+    <span className="text-[10px] font-semibold text-gray-600">Keep learning</span>
+  </FloatingCard>
 );
 
 const VisualPanel = () => (
-  <div className="relative hidden lg:block lg:w-[60%]">
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#F4F9F6] p-8">
-      {/* ambient glows */}
-      <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-emerald-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute -left-20 bottom-20 h-72 w-72 rounded-full bg-teal-100/60 blur-3xl" />
+  <MotionConfig reducedMotion="user">
+    <div className="relative hidden lg:block lg:w-[60%]">
+      <div className="relative flex h-full flex-col overflow-hidden bg-[#F4F9F6] p-8 lg:p-10">
+        {/* ambient glows */}
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -left-20 bottom-20 h-72 w-72 rounded-full bg-teal-100/60 blur-3xl" />
 
-      {/* dotted paths */}
-      <svg className="pointer-events-none absolute left-10 top-1/3 h-24 w-40 text-[#16834A]" fill="none" aria-hidden="true">
-        <path d="M0,36 C30,8 90,6 130,26" stroke="currentColor" strokeWidth="2" strokeDasharray="3 6" opacity="0.35" />
-      </svg>
-      <svg className="pointer-events-none absolute bottom-24 right-8 h-24 w-40 text-[#16834A]" fill="none" aria-hidden="true">
-        <path d="M0,10 C40,26 90,20 130,8" stroke="currentColor" strokeWidth="2" strokeDasharray="3 6" opacity="0.35" />
-      </svg>
+        {/* decorative dots */}
+        <div className="pointer-events-none absolute right-1/3 top-6 h-2.5 w-2.5 rounded-full bg-[#16834A]/25" />
+        <div className="pointer-events-none absolute left-1/4 bottom-24 h-2 w-2 rounded-full bg-[#16834A]/20" />
+        <div className="pointer-events-none absolute right-12 top-1/2 h-2 w-2 rounded-full bg-[#16834A]/20" />
+        <div className="pointer-events-none absolute left-[14%] top-[20%] h-1.5 w-1.5 rounded-full bg-[#16834A]/20" />
 
-      {/* decorative dots */}
-      <div className="pointer-events-none absolute right-1/3 top-6 h-2.5 w-2.5 rounded-full bg-[#16834A]/25" />
-      <div className="pointer-events-none absolute left-1/3 bottom-32 h-2 w-2 rounded-full bg-[#16834A]/20" />
-      <div className="pointer-events-none absolute right-14 top-1/2 h-2 w-2 rounded-full bg-[#16834A]/20" />
+        {/* connection paths linking floaters to the mockup */}
+        <svg className="pointer-events-none absolute left-[6%] top-[16%] h-20 w-32 text-[#16834A]" fill="none" aria-hidden="true">
+          <path d="M0,24 C24,6 62,4 100,16" stroke="currentColor" strokeWidth="2" strokeDasharray="3 6" opacity="0.35" />
+        </svg>
+        <svg className="pointer-events-none absolute right-[5%] top-[14%] h-20 w-32 text-[#16834A]" fill="none" aria-hidden="true">
+          <path d="M0,8 C30,18 66,14 96,6" stroke="currentColor" strokeWidth="2" strokeDasharray="3 6" opacity="0.35" />
+        </svg>
+        <svg className="pointer-events-none absolute bottom-[16%] left-[9%] h-20 w-32 text-[#16834A]" fill="none" aria-hidden="true">
+          <path d="M0,10 C36,24 76,18 104,8" stroke="currentColor" strokeWidth="2" strokeDasharray="3 6" opacity="0.35" />
+        </svg>
+        <svg className="pointer-events-none absolute bottom-[14%] right-[7%] h-20 w-32 text-[#16834A]" fill="none" aria-hidden="true">
+          <path d="M0,14 C32,4 66,6 100,16" stroke="currentColor" strokeWidth="2" strokeDasharray="3 6" opacity="0.35" />
+        </svg>
 
-      {/* decorative floating elements */}
-      <ChecklistCard />
-      <OpenNotebook />
-      <TargetBadge />
-      <BooksCap />
-
-      {/* central dashboard card */}
-      <div className="relative z-10 m-auto w-full max-w-[410px] rounded-[1.75rem] border border-[#E6EFE9] bg-white p-7 shadow-[0_24px_60px_rgba(20,107,58,0.14)]">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-[#16834A]">
-            <BarChart3 className="h-5 w-5" />
-          </span>
-          <p className="text-[15px] font-bold text-gray-900">Your Learning Journey</p>
-        </div>
-
-        {/* overall progress */}
-        <div className="mt-6 flex items-center gap-5">
-          <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-medium text-gray-500">Overall Progress</p>
-            <div className="mt-2.5 h-2.5 w-full rounded-full bg-emerald-100">
-              <div className="h-2.5 rounded-full bg-[#16834A]" style={{ width: '72%' }} />
-            </div>
-            <p className="mt-2 text-[12px] font-semibold text-gray-600">72% Completed</p>
+        {/* composition — syllabus mockup + floating elements in clear bands around it */}
+        <div className="relative mx-auto my-auto w-full max-w-[600px] pt-24 pb-16">
+          <div className="relative mx-auto w-full max-w-[390px]">
+            <SyllabusMockup />
           </div>
-          <CircleProgress percent={72} />
+
+          {/* floats live in the padding bands above/below the card so they never cover it */}
+          <CalendarChip />
+          <TodayPlanCard />
+          <GradCapChip />
+          <OpenNotebook />
+          <BooksStack />
+          <PlantChip />
         </div>
 
-        {/* subjects */}
-        <div className="mt-6 border-t border-[#F0F4F1] pt-5">
-          <p className="mb-3.5 text-[13px] font-medium text-gray-500">Your Subjects</p>
-          <div className="space-y-4">
-            <SubjectRow icon={Code} name="MERN Stack" percent={80} />
-            <SubjectRow icon={BarChart3} name="DSA with JS" percent={60} />
-          </div>
+        {/* bottom message */}
+        <div className="relative z-10 mt-4 pb-1 text-center">
+          <p className="text-xl font-bold leading-snug text-gray-900 sm:text-2xl">
+            Organize your syllabus,
+            <br />
+            track progress, <span className="text-[#16834A]">achieve more</span>
+          </p>
+          <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-gray-500">
+            Plan your study, track your progress and stay consistent every day.
+          </p>
         </div>
-      </div>
-
-      {/* bottom tagline */}
-      <div className="relative z-10 mt-6 pb-1 text-center">
-        <p className="text-2xl font-bold text-gray-900">
-          Learn. Track. <span className="text-[#16834A]">Improve.</span> Repeat.
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-gray-500">
-          Stay consistent, track your progress
-          <br />
-          and become better every day.
-        </p>
       </div>
     </div>
-  </div>
+  </MotionConfig>
 );
 
 const SUBJECT_OPTIONS = [

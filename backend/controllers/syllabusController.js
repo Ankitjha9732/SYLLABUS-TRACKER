@@ -1,12 +1,12 @@
 import Roadmap from '../models/Roadmap.js';
 import Section from '../models/Section.js';
 import Topic from '../models/Topic.js';
-import SubTopic from '../models/SubTopic.js';
 import Progress from '../models/Progress.js';
 import Note from '../models/Note.js';
 import Question from '../models/Question.js';
 import Problem from '../models/Problem.js';
-import { buildRoadmapTree, getContentRoadmapId } from '../utils/roadmapBuilder.js';
+import User from '../models/User.js';
+import { buildRoadmapTree, getContentRoadmapId, getHiddenIds } from '../utils/roadmapBuilder.js';
 
 const getUserSyllabusRoadmap = async (userId, subject) => {
   const template = await Roadmap.findOne({ subject, isTemplate: true, linked: { $ne: true } }).sort({ order: 1 });
@@ -47,7 +47,8 @@ export const createSection = async (req, res, next) => {
   }
 };
 
-// @desc    Delete a custom section (and its topics, progress, notes, questions, problems)
+// @desc    Remove a section from the user's own syllabus (soft delete; the
+//          shared template content stays intact for other/new accounts)
 // @route   DELETE /api/syllabus/section/:id
 // @access  Private
 export const deleteSection = async (req, res, next) => {
@@ -63,23 +64,20 @@ export const deleteSection = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Section not found' });
     }
 
-    if (!section.createdBy || String(section.createdBy) !== String(req.user._id)) {
-      return res.status(403).json({ success: false, message: 'Only custom sections you added can be deleted' });
-    }
-
     const topicIds = await Topic.find({ sectionId: section._id }).distinct('_id');
 
     await Promise.all([
-      SubTopic.deleteMany({ topicId: { $in: topicIds } }),
-      Topic.deleteMany({ sectionId: section._id }),
       Progress.deleteMany({ userId: req.user._id, topicId: { $in: topicIds } }),
       Note.deleteMany({ userId: req.user._id, topicId: { $in: topicIds } }),
       Question.deleteMany({ userId: req.user._id, topicId: { $in: topicIds } }),
       Problem.deleteMany({ userId: req.user._id, topicId: { $in: topicIds } }),
     ]);
-    await section.deleteOne();
+    await User.updateOne(
+      { _id: req.user._id },
+      { $addToSet: { hiddenSectionIds: section._id, hiddenTopicIds: { $each: topicIds } } }
+    );
 
-    res.json({ success: true, message: 'Section deleted' });
+    res.json({ success: true, message: 'Section removed from your syllabus' });
   } catch (error) {
     next(error);
   }
@@ -118,9 +116,14 @@ export const getSection = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Section not found' });
     }
 
-    const topics = await Topic.find({ sectionId: section._id })
+    const hidden = await getHiddenIds(req.user._id);
+    if (hidden.sections.has(String(section._id))) {
+      return res.status(404).json({ success: false, message: 'Section not found' });
+    }
+
+    const topics = (await Topic.find({ sectionId: section._id })
       .sort({ order: 1, createdAt: 1 })
-      .lean();
+      .lean()).filter((t) => !hidden.topics.has(String(t._id)));
     const progress = await Progress.find({
       userId: req.user._id,
       topicId: { $in: topics.map((t) => t._id) },
@@ -217,7 +220,8 @@ export const updateTopic = async (req, res, next) => {
   }
 };
 
-// @desc    Delete a topic (and its progress, notes, questions, problems)
+// @desc    Remove a topic from the user's own syllabus (soft delete; the
+//          shared template content stays intact for other/new accounts)
 // @route   DELETE /api/syllabus/topic/:id
 // @access  Private
 export const deleteTopic = async (req, res, next) => {
@@ -234,15 +238,14 @@ export const deleteTopic = async (req, res, next) => {
     }
 
     await Promise.all([
-      SubTopic.deleteMany({ topicId: topic._id }),
       Progress.deleteMany({ userId: req.user._id, topicId: topic._id }),
       Note.deleteMany({ userId: req.user._id, topicId: topic._id }),
       Question.deleteMany({ userId: req.user._id, topicId: topic._id }),
       Problem.deleteMany({ userId: req.user._id, topicId: topic._id }),
     ]);
-    await topic.deleteOne();
+    await User.updateOne({ _id: req.user._id }, { $addToSet: { hiddenTopicIds: topic._id } });
 
-    res.json({ success: true, message: 'Topic deleted' });
+    res.json({ success: true, message: 'Topic removed from your syllabus' });
   } catch (error) {
     next(error);
   }
