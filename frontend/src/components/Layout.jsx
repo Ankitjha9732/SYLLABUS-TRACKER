@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Check, LayoutDashboard, BookOpenCheck, LogOut } from 'lucide-react';
+import { GraduationCap, LayoutDashboard, BookOpenCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { PageLoader } from '../components/Loading.jsx';
 import { SUBJECTS, subjectLabel } from '../components/Sidebar.jsx';
@@ -29,8 +29,8 @@ const Layout = () => {
       {/* Top navigation bar */}
       <header className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-4 border-b border-[#D9E1DC] bg-white px-3 sm:px-6 max-sm:gap-1.5">
         <NavLink to="/dashboard" className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[#16834A] bg-emerald-50/60 text-[#16834A]">
-            <Check className="h-4 w-4" strokeWidth={3} />
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#16834A] to-[#0f572f] text-white shadow-sm">
+            <GraduationCap className="h-5 w-5" strokeWidth={2.5} />
           </span>
           <span className="hidden text-sm font-bold tracking-tight text-gray-900 min-[420px]:block">Progress Tracker</span>
         </NavLink>
