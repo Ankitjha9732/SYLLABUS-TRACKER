@@ -341,7 +341,7 @@ const TopicRow = ({ topic, index, onToggle, onEdit, onDelete }) => {
     >
       <ToggleButton checked={topic.completed} onClick={() => onToggle(topic)} />
       <Link to={`/topics/${topic._id}`} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-        <span className={`truncate text-sm ${topic.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+        <span className={`min-w-0 break-words text-sm ${topic.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
           {topic.title}
         </span>
         {topic.isCustom ? (

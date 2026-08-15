@@ -38,7 +38,7 @@ const Modal = ({ open, onClose, title, children, maxWidth = 'max-w-lg' }) => {
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-              <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+              <h2 className="min-w-0 break-words pr-2 text-lg font-semibold text-slate-800">{title}</h2>
               <button
                 type="button"
                 onClick={onClose}
