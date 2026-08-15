@@ -16,7 +16,7 @@ import ProgressBar from '../components/ProgressBar.jsx';
 import { Spinner } from '../components/Loading.jsx';
 import { SUBJECTS, subjectLabel } from '../components/Sidebar.jsx';
 
-const cardClass = 'rounded-2xl border border-[#D9E1DC] bg-white p-6 shadow-sm';
+const cardClass = 'min-w-0 rounded-2xl border border-[#D9E1DC] bg-white p-6 shadow-sm';
 
 const CardTitle = ({ children }) => <h2 className="text-base font-semibold text-gray-900">{children}</h2>;
 
@@ -49,7 +49,7 @@ const StatCard = ({ label, value, sub, icon: Icon, right }) => (
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.35 }}
-    className="flex items-center gap-4 rounded-2xl border border-[#D9E1DC] bg-white p-5 shadow-sm transition hover:shadow-md"
+    className="flex min-w-0 items-center gap-4 rounded-2xl border border-[#D9E1DC] bg-white p-5 shadow-sm transition hover:shadow-md"
   >
     <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F4F9F6] text-[#16834A]">
       <Icon className="h-5 w-5" />
@@ -202,7 +202,7 @@ export const Dashboard = () => {
       </motion.div>
 
       {/* Metric cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Overall Progress"
           value={`${progress}%`}
@@ -233,7 +233,7 @@ export const Dashboard = () => {
           className={cardClass}
         >
           <CardTitle>Subject-wise Progress</CardTitle>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {subjectAggs.map((s) => (
               <div key={s.label} className="rounded-xl border border-[#E6EFE9] bg-[#F4F9F6] p-4">
                 <div className="mb-2 flex items-center justify-between">
@@ -251,7 +251,7 @@ export const Dashboard = () => {
       ) : null}
 
       {/* Overall progress + Continue learning */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -311,7 +311,7 @@ export const Dashboard = () => {
       </div>
 
       {/* Your Syllabus + Recent Notes */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -385,7 +385,7 @@ export const Dashboard = () => {
 
       {/* Weak topics + Topics for revision (PCB) */}
       {isPCB ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -463,7 +463,7 @@ export const Dashboard = () => {
       ) : null}
 
       {/* Interview Questions + DSA problems / Roadmap */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
