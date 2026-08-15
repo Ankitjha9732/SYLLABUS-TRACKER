@@ -332,9 +332,9 @@ export const Dashboard = () => {
                   to="/syllabus"
                   className="block rounded-xl border border-[#E6EFE9] p-3 transition hover:border-[#16834A]/40 hover:bg-[#F4F9F6]"
                 >
-                  <div className="mb-1.5 flex items-center justify-between text-sm">
-                    <span className="truncate font-medium text-gray-700">{s.title}</span>
-                    <span className="shrink-0 pl-2 text-xs font-bold text-[#146B3A]">{s.progress}%</span>
+                  <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                    <span className="min-w-0 flex-1 truncate font-medium text-gray-700">{s.title}</span>
+                    <span className="shrink-0 text-xs font-bold text-[#146B3A]">{s.progress}%</span>
                   </div>
                   <ProgressBar value={s.progress} size="sm" />
                 </Link>
@@ -408,7 +408,7 @@ export const Dashboard = () => {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-gray-700">{topic.title}</p>
-                      <p className="text-[11px] text-gray-400">{sectionTitle}</p>
+                      <p className="truncate text-[11px] text-gray-400">{sectionTitle}</p>
                     </div>
                     <span className="shrink-0 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600 ring-1 ring-rose-200">
                       Weak
@@ -443,7 +443,7 @@ export const Dashboard = () => {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-gray-700">{topic.title}</p>
-                      <p className="text-[11px] text-gray-400">{sectionTitle}</p>
+                      <p className="truncate text-[11px] text-gray-400">{sectionTitle}</p>
                     </div>
                     <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#146B3A] ring-1 ring-emerald-200">
                       {topic.revision === 'first'
