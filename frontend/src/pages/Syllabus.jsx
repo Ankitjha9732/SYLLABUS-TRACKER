@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, Check, ArrowRight } from 'lucide-react';
 import { useData } from '../context/DataContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Spinner } from '../components/Loading.jsx';
@@ -349,7 +349,11 @@ const TopicRow = ({ topic, index, isPCB, onToggle, onEdit, onDelete }) => {
       className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5"
     >
       <ToggleButton checked={topic.completed} onClick={() => onToggle(topic)} />
-      <Link to={`/topics/${topic._id}`} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+      <Link
+        to={`/topics/${topic._id}`}
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-xl text-left"
+        title="Open notes, important questions & weak-topic controls"
+      >
         <span className={`min-w-0 break-words text-sm ${topic.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
           {topic.title}
         </span>
@@ -369,6 +373,7 @@ const TopicRow = ({ topic, index, isPCB, onToggle, onEdit, onDelete }) => {
         {topic.optional ? (
           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Optional</span>
         ) : null}
+        <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500" />
       </Link>
       <div className="hidden w-20 shrink-0 items-center gap-2 sm:flex">
         <ProgressBar value={topic.completed ? 100 : 0} size="sm" />
