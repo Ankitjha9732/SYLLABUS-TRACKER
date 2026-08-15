@@ -212,6 +212,9 @@ export const updateTopic = async (req, res, next) => {
 
     topic.title = req.body.title || topic.title;
     topic.description = req.body.description ?? topic.description;
+    if (req.body.priority !== undefined) topic.priority = req.body.priority;
+    if (req.body.revision !== undefined) topic.revision = req.body.revision;
+    if (req.body.weak !== undefined) topic.weak = req.body.weak === true;
     await topic.save();
 
     res.json({ success: true, topic });

@@ -648,6 +648,7 @@ const SUBJECT_OPTIONS = [
   { key: 'mern', label: 'MERN Stack', description: 'MongoDB · Express · React · Node.js', icon: Code },
   { key: 'dsa', label: 'DSA', description: 'Data Structures & Algorithms', icon: Network },
   { key: 'pcm', label: 'PCM', description: 'Physics · Chemistry · Mathematics', icon: Atom },
+  { key: 'pcb', label: 'PCB (NEET)', description: 'Physics · Chemistry · Biology', icon: Leaf },
 ];
 
 export const Login = () => {

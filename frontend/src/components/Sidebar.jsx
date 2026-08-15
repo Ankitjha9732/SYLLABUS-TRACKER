@@ -8,6 +8,7 @@ import {
   Code2,
   BrainCircuit,
   Atom,
+  Leaf,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -20,6 +21,7 @@ export const SUBJECTS = {
   mern: { label: 'MERN Stack', icon: Code2, badge: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
   dsa: { label: 'DSA', icon: BrainCircuit, badge: 'bg-teal-50 text-teal-700 ring-teal-200' },
   pcm: { label: 'PCM', icon: Atom, badge: 'bg-[#F4F9F6] text-[#146B3A] ring-[#16834A]/30' },
+  pcb: { label: 'PCB (NEET)', icon: Leaf, badge: 'bg-violet-50 text-violet-700 ring-violet-200' },
 };
 
 export const subjectLabel = (subject) => SUBJECTS[subject]?.label || 'Learning';

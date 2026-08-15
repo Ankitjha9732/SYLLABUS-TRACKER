@@ -587,3 +587,155 @@ export const buildPcmTemplate = () => ({
   description: 'Physics • Chemistry • Mathematics — the complete Class 11–12 PCM syllabus for competitive preparation.',
   sections: [...pcmSections],
 });
+
+export const pcbPhysicsSections = [
+  sec('Physics — Mechanics', [
+    t('Physical World and Measurement'),
+    t('Units and Measurements'),
+    t('Motion in a Straight Line'),
+    t('Motion in a Plane'),
+    t('Laws of Motion'),
+    t('Work, Energy and Power'),
+    t('System of Particles and Rotational Motion'),
+    t('Gravitation'),
+  ], { description: 'Classical mechanics — kinematics to rotational motion and gravitation.' }),
+  sec('Physics — Properties of Matter, Heat & Thermodynamics', [
+    t('Mechanical Properties of Solids'),
+    t('Mechanical Properties of Fluids'),
+    t('Thermal Properties of Matter'),
+    t('Thermodynamics'),
+    t('Kinetic Theory of Gases'),
+  ], { description: 'Solids, fluids, heat and the kinetic theory of gases.' }),
+  sec('Physics — Oscillations & Waves', [
+    t('Oscillations'),
+    t('Waves'),
+  ], { description: 'Periodic motion and wave phenomena.' }),
+  sec('Physics — Electricity & Magnetism', [
+    t('Electric Charges and Fields'),
+    t('Electrostatic Potential and Capacitance'),
+    t('Current Electricity'),
+    t('Moving Charges and Magnetism'),
+    t('Magnetism and Matter'),
+    t('Electromagnetic Induction'),
+    t('Alternating Current'),
+  ], { description: 'Electrostatics, current electricity, magnetism and EMI.' }),
+  sec('Physics — Optics, Modern Physics & Electronics', [
+    t('Electromagnetic Waves'),
+    t('Ray Optics and Optical Instruments'),
+    t('Wave Optics'),
+    t('Dual Nature of Radiation and Matter'),
+    t('Atoms'),
+    t('Nuclei'),
+    t('Semiconductor Electronics'),
+    t('Communication Systems'),
+    t('Experimental Skills'),
+  ], { description: 'Optics, quantum physics, nuclei and semiconductor electronics.' }),
+];
+
+export const pcbChemistrySections = [
+  sec('Chemistry — Physical', [
+    t('Some Basic Concepts of Chemistry'),
+    t('Structure of Atom'),
+    t('Chemical Thermodynamics'),
+    t('Equilibrium'),
+    t('Redox Reactions'),
+    t('Solutions'),
+    t('Electrochemistry'),
+    t('Chemical Kinetics'),
+  ], { description: 'Fundamental physical chemistry concepts and calculations.' }),
+  sec('Chemistry — Inorganic', [
+    t('Classification of Elements and Periodicity in Properties'),
+    t('Chemical Bonding and Molecular Structure'),
+    t('P-Block Elements'),
+    t('d- and f-Block Elements'),
+    t('Coordination Compounds'),
+    t('Practical Chemistry — Inorganic'),
+  ], { description: 'Periodic properties, bonding and inorganic compounds.' }),
+  sec('Chemistry — Organic', [
+    t('Purification and Characterisation of Organic Compounds'),
+    t('Some Basic Principles of Organic Chemistry'),
+    t('Hydrocarbons'),
+    t('Organic Compounds Containing Halogens'),
+    t('Organic Compounds Containing Oxygen'),
+    t('Organic Compounds Containing Nitrogen'),
+    t('Biomolecules'),
+    t('Principles Related to Practical Chemistry'),
+  ], { description: 'Organic reactions, functional groups and biomolecules.' }),
+];
+
+export const pcbBotanySections = [
+  sec('Botany — Diversity & Organisation', [
+    t('Diversity in Living World'),
+    t('Biological Classification'),
+    t('Plant Kingdom'),
+    t('Structural Organisation in Plants'),
+    t('Anatomy of Flowering Plants'),
+    t('Morphology of Flowering Plants'),
+  ], { description: 'Plant classification and structural organisation.' }),
+  sec('Botany — Cell Structure & Function', [
+    t('Cell: The Unit of Life'),
+    t('Cell Division'),
+    t('Biomolecules in Plants'),
+    t('Cell Cycle and Cell Division'),
+  ], { description: 'Cell structure, biomolecules and cell division.' }),
+  sec('Botany — Plant Physiology', [
+    t('Transport in Plants'),
+    t('Mineral Nutrition'),
+    t('Photosynthesis in Higher Plants'),
+    t('Respiration in Plants'),
+    t('Plant Growth and Development'),
+    t('Plant Hormones'),
+  ], { description: 'Water relations, photosynthesis, respiration and growth.' }),
+  sec('Botany — Reproduction, Genetics & Ecology', [
+    t('Sexual Reproduction in Flowering Plants'),
+    t('Principles of Inheritance and Variation'),
+    t('Molecular Basis of Inheritance'),
+    t('Ecology and Environment'),
+    t('Environment and Sustainable Development'),
+  ], { description: 'Plant reproduction, genetics and ecological concepts.' }),
+];
+
+export const pcbZoologySections = [
+  sec('Zoology — Diversity & Organisation', [
+    t('Diversity in Living World — Animal Kingdom'),
+    t('Structural Organisation in Animals'),
+    t('Animal Tissues'),
+  ], { description: 'Animal classification and body organisation.' }),
+  sec('Zoology — Cell & Human Physiology', [
+    t('Cell: The Unit of Life — Animal Cells'),
+    t('Digestion and Absorption'),
+    t('Breathing and Exchange of Gases'),
+    t('Body Fluids and Circulation'),
+    t('Excretory Products and their Elimination'),
+    t('Locomotion and Movement'),
+    t('Neural Control and Coordination'),
+    t('Chemical Coordination and Integration'),
+  ], { description: 'Human and animal physiology systems.' }),
+  sec('Zoology — Reproduction, Genetics & Evolution', [
+    t('Human Reproduction'),
+    t('Reproductive Health'),
+    t('Evolution'),
+    t('Principles of Inheritance and Variation — Genetics'),
+    t('Molecular Basis of Inheritance — Molecular Genetics'),
+  ], { description: 'Reproduction, genetics, molecular biology and evolution.' }),
+  sec('Zoology — Human Welfare & Biotechnology', [
+    t('Human Health and Disease'),
+    t('Microbes in Human Welfare'),
+    t('Biotechnology: Principles and Processes'),
+    t('Biotechnology and its Applications'),
+    t('Environmental Issues'),
+  ], { description: 'Health, biotechnology and applied topics.' }),
+];
+
+export const buildPcbTemplate = () => ({
+  title: 'PCB (NEET)',
+  icon: 'Leaf',
+  subject: 'pcb',
+  description: 'Physics • Chemistry • Biology (Botany & Zoology) — the complete NEET-oriented PCB syllabus.',
+  sections: [
+    ...pcbPhysicsSections,
+    ...pcbChemistrySections,
+    ...pcbBotanySections,
+    ...pcbZoologySections,
+  ],
+});

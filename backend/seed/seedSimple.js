@@ -3,7 +3,7 @@ import connectDB from '../config/db.js';
 import Roadmap from '../models/Roadmap.js';
 import Section from '../models/Section.js';
 import Topic from '../models/Topic.js';
-import { buildMernTemplate, buildDsaTemplate, buildPcmTemplate } from './seedData.js';
+import { buildMernTemplate, buildDsaTemplate, buildPcmTemplate, buildPcbTemplate } from './seedData.js';
 
 dotenv.config();
 
@@ -90,6 +90,9 @@ const seed = async () => {
 
     console.log('Seeding PCM template...');
     await createTemplate(buildPcmTemplate());
+
+    console.log('Seeding PCB (NEET) template...');
+    await createTemplate(buildPcbTemplate());
 
     const counts = await Promise.all([
       Roadmap.countDocuments(),

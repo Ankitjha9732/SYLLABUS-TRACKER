@@ -22,7 +22,7 @@ export const registerValidation = [
     .withMessage('Please confirm your password')
     .custom((val, { req }) => val === req.body.password)
     .withMessage('Passwords do not match'),
-  body('subject').isIn(['mern', 'dsa', 'pcm']).withMessage('Subject must be mern, dsa or pcm'),
+  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb']).withMessage('Subject must be mern, dsa, pcm or pcb'),
 ];
 
 export const loginValidation = [
@@ -38,7 +38,7 @@ export const roadmapValidation = [
   body('title').trim().notEmpty().withMessage('Roadmap title is required').isLength({ max: 120 }).withMessage('Title cannot exceed 120 characters'),
   body('description').optional().trim().isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters'),
   body('icon').optional().trim().isLength({ max: 40 }).withMessage('Icon cannot exceed 40 characters'),
-  body('subject').isIn(['mern', 'dsa', 'pcm']).withMessage('Subject must be mern, dsa or pcm'),
+  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb']).withMessage('Subject must be mern, dsa, pcm or pcb'),
   body('targetDate').optional().custom((val) => val === '' || !Number.isNaN(Date.parse(val))).withMessage('Target date is invalid'),
 ];
 
@@ -62,6 +62,9 @@ export const topicValidation = [
 export const topicUpdateValidation = [
   body('title').trim().notEmpty().withMessage('Topic title is required').isLength({ max: 120 }).withMessage('Title cannot exceed 120 characters'),
   body('description').optional().trim().isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters'),
+  body('priority').optional().isIn(['high', 'medium', 'low']).withMessage('Priority must be high, medium or low'),
+  body('revision').optional().isIn(['none', 'first', 'second', 'final']).withMessage('Revision must be none, first, second or final'),
+  body('weak').optional().isBoolean().withMessage('weak must be a boolean'),
 ];
 
 export const subTopicValidation = [

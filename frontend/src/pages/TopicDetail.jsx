@@ -14,6 +14,7 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { useData } from '../context/DataContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import Modal from '../components/Modal.jsx';
 import ConfirmDialog from '../components/ConfirmDialog.jsx';
@@ -38,8 +39,10 @@ const Checkbox = ({ checked, onClick, title }) => (
 export const TopicDetail = () => {
   const { topicId } = useParams();
   const toast = useToast();
+  const { user } = useAuth();
   const {
     updateTopicStatus,
+    updateTopicMeta,
     fetchTopicDetail,
     createNote,
     updateNote,
@@ -51,6 +54,7 @@ export const TopicDetail = () => {
     updateProblem,
     deleteProblem,
   } = useData();
+  const isPCB = user?.subject === 'pcb';
 
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -123,6 +127,16 @@ export const TopicDetail = () => {
     try {
       await updateTopicStatus(topic._id, next);
       toast.success(next ? 'Topic completed' : 'Topic reopened');
+    } catch (err) {
+      toast.error(err.message);
+      await reload();
+    }
+  };
+
+  const updateMeta = async (patch) => {
+    setDetail((d) => (d ? { ...d, topic: { ...d.topic, ...patch } } : d));
+    try {
+      await updateTopicMeta(topic._id, { title: topic.title, description: topic.description || '', ...patch });
     } catch (err) {
       toast.error(err.message);
       await reload();
@@ -258,6 +272,65 @@ export const TopicDetail = () => {
             {topic.completed ? 'Completed' : 'Not completed yet'}
           </span>
         </div>
+
+        {isPCB ? (
+          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Priority</span>
+              {[
+                { value: 'high', label: 'High', cls: 'text-rose-600 bg-rose-50 ring-rose-200' },
+                { value: 'medium', label: 'Medium', cls: 'text-amber-600 bg-amber-50 ring-amber-200' },
+                { value: 'low', label: 'Low', cls: 'text-emerald-600 bg-emerald-50 ring-emerald-200' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => updateMeta({ priority: opt.value })}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 transition ${
+                    topic.priority === opt.value ? opt.cls : 'text-slate-500 bg-white ring-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <label className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Revision</span>
+              <select
+                value={topic.revision || 'none'}
+                onChange={(e) => updateMeta({ revision: e.target.value })}
+                className="cursor-pointer rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              >
+                <option value="none">Not Revised</option>
+                <option value="first">1st Revision</option>
+                <option value="second">2nd Revision</option>
+                <option value="final">Final Revision</option>
+              </select>
+            </label>
+
+            <button
+              type="button"
+              onClick={() => updateMeta({ weak: !topic.weak })}
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 transition ${
+                topic.weak
+                  ? 'bg-rose-50 text-rose-600 ring-rose-200'
+                  : 'bg-white text-slate-500 ring-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <span
+                className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
+                  topic.weak
+                    ? 'border-rose-500 bg-rose-500 text-white'
+                    : 'border-slate-300 bg-white text-transparent'
+                }`}
+              >
+                <Check className="h-3 w-3" strokeWidth={3.5} />
+              </span>
+              Weak Topic
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {/* Important Notes */}

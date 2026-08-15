@@ -41,6 +41,20 @@ const topicSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    priority: {
+      type: String,
+      enum: ['high', 'medium', 'low'],
+      default: 'medium',
+    },
+    revision: {
+      type: String,
+      enum: ['none', 'first', 'second', 'final'],
+      default: 'none',
+    },
+    weak: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

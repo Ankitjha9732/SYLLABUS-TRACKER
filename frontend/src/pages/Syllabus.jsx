@@ -37,6 +37,7 @@ export const Syllabus = () => {
   const sections = syllabus?.sections || [];
   const totals = syllabus?.totals;
   const subject = subjectLabel(user?.subject);
+  const isPCB = user?.subject === 'pcb';
 
   if (loading && !syllabus) {
     return (
@@ -161,6 +162,7 @@ export const Syllabus = () => {
               key={section._id}
               section={section}
               index={si}
+              isPCB={isPCB}
               onAddTopic={() => setAddTopicFor(section._id)}
               onToggle={handleToggle}
               onSectionTick={handleSectionTick}
@@ -233,7 +235,7 @@ export const Syllabus = () => {
   );
 };
 
-const SectionBlock = ({ section, index, onAddTopic, onToggle, onSectionTick, onEdit, onDelete, onDeleteSection }) => {
+const SectionBlock = ({ section, index, isPCB, onAddTopic, onToggle, onSectionTick, onEdit, onDelete, onDeleteSection }) => {
   const [open, setOpen] = useState(false);
 
   const tickTargets = (section.topics || []).filter((t) => !t.optional);
@@ -313,6 +315,7 @@ const SectionBlock = ({ section, index, onAddTopic, onToggle, onSectionTick, onE
                     key={topic._id}
                     topic={topic}
                     index={ti}
+                    isPCB={isPCB}
                     onToggle={onToggle}
                     onEdit={onEdit}
                     onDelete={onDelete}
@@ -331,7 +334,13 @@ const SectionBlock = ({ section, index, onAddTopic, onToggle, onSectionTick, onE
   );
 };
 
-const TopicRow = ({ topic, index, onToggle, onEdit, onDelete }) => {
+const TopicRow = ({ topic, index, isPCB, onToggle, onEdit, onDelete }) => {
+  const priorityCls =
+    topic.priority === 'high'
+      ? 'bg-rose-50 text-rose-600'
+      : topic.priority === 'low'
+      ? 'bg-emerald-50 text-emerald-600'
+      : 'bg-amber-50 text-amber-600';
   return (
     <motion.div
       initial={{ opacity: 0, x: -6 }}
@@ -344,6 +353,16 @@ const TopicRow = ({ topic, index, onToggle, onEdit, onDelete }) => {
         <span className={`min-w-0 break-words text-sm ${topic.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
           {topic.title}
         </span>
+        {isPCB && topic.priority ? (
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${priorityCls}`}>
+            {topic.priority}
+          </span>
+        ) : null}
+        {isPCB && topic.weak ? (
+          <span className="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600 ring-1 ring-rose-200">
+            Weak
+          </span>
+        ) : null}
         {topic.isCustom ? (
           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-brand-500">Custom</span>
         ) : null}

@@ -38,8 +38,8 @@ export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password, subject } = req.body;
 
-    if (!subject || !['mern', 'dsa', 'pcm'].includes(subject)) {
-      return res.status(400).json({ success: false, message: 'Subject must be mern, dsa or pcm' });
+    if (!subject || !['mern', 'dsa', 'pcm', 'pcb'].includes(subject)) {
+      return res.status(400).json({ success: false, message: 'Subject must be mern, dsa, pcm or pcb' });
     }
 
     const existing = await User.findOne({ email });

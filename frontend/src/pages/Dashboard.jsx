@@ -80,9 +80,18 @@ export const Dashboard = () => {
   const subject = SUBJECTS[user?.subject] || SUBJECTS.mern;
   const subjectText = subjectLabel(user?.subject);
   const isDSA = user?.subject === 'dsa';
+  const isPCB = user?.subject === 'pcb';
   const totals = stats?.totals;
   const progress = totals?.overallProgress ?? 0;
   const sections = stats?.sectionStats || syllabus?.sections || [];
+
+  const SUBJECT_PREFIXES = ['Physics', 'Chemistry', 'Botany', 'Zoology'];
+  const subjectAggs = SUBJECT_PREFIXES.map((prefix) => {
+    const rows = sections.filter((s) => (s.title || '').startsWith(prefix) && !s.optional);
+    const total = rows.reduce((n, s) => n + (s.total || 0), 0);
+    const completed = rows.reduce((n, s) => n + (s.completed || 0), 0);
+    return { label: prefix, total, completed, progress: total === 0 ? 0 : Math.round((completed / total) * 100) };
+  });
 
   const nextTopic = useMemo(() => {
     for (const s of syllabus?.sections || []) {
@@ -91,6 +100,26 @@ export const Dashboard = () => {
       if (t) return { section: s, topic: t };
     }
     return null;
+  }, [syllabus]);
+
+  const weakTopics = useMemo(() => {
+    const out = [];
+    for (const s of syllabus?.sections || []) {
+      (s.topics || []).forEach((t) => {
+        if (t.weak) out.push({ topic: t, sectionTitle: s.title });
+      });
+    }
+    return out.slice(0, 6);
+  }, [syllabus]);
+
+  const revisionTopics = useMemo(() => {
+    const out = [];
+    for (const s of syllabus?.sections || []) {
+      (s.topics || []).forEach((t) => {
+        if (t.revision && t.revision !== 'none') out.push({ topic: t, sectionTitle: s.title });
+      });
+    }
+    return out.sort((a, b) => (a.topic.revision || '') < (b.topic.revision || '') ? 1 : -1).slice(0, 6);
   }, [syllabus]);
 
   useEffect(() => {
@@ -194,6 +223,32 @@ export const Dashboard = () => {
           icon={Timer}
         />
       </div>
+
+      {/* Subject-wise progress (PCB) */}
+      {isPCB ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.03 }}
+          className={cardClass}
+        >
+          <CardTitle>Subject-wise Progress</CardTitle>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {subjectAggs.map((s) => (
+              <div key={s.label} className="rounded-xl border border-[#E6EFE9] bg-[#F4F9F6] p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">{s.label}</span>
+                  <span className="text-sm font-bold text-[#146B3A]">{s.progress}%</span>
+                </div>
+                <ProgressBar value={s.progress} size="sm" />
+                <p className="mt-1.5 text-xs text-gray-400">
+                  {s.completed}/{s.total} topics
+                </p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      ) : null}
 
       {/* Overall progress + Continue learning */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -327,6 +382,85 @@ export const Dashboard = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Weak topics + Topics for revision (PCB) */}
+      {isPCB ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className={cardClass}
+          >
+            <div className="flex items-center justify-between">
+              <CardTitle>Weak Topics</CardTitle>
+              <Link to="/syllabus" className="text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+                View all →
+              </Link>
+            </div>
+            <div className="mt-4 space-y-2">
+              {weakTopics.length ? (
+                weakTopics.map(({ topic, sectionTitle }) => (
+                  <Link
+                    key={topic._id}
+                    to={`/topics/${topic._id}`}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50/40 px-3.5 py-2.5 transition hover:bg-rose-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-700">{topic.title}</p>
+                      <p className="text-[11px] text-gray-400">{sectionTitle}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600 ring-1 ring-rose-200">
+                      Weak
+                    </span>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-gray-400">No weak topics yet. Mark a topic as weak from its topic page.</p>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className={cardClass}
+          >
+            <div className="flex items-center justify-between">
+              <CardTitle>Topics for Revision</CardTitle>
+              <Link to="/syllabus" className="text-sm font-medium text-[#16834A] transition hover:text-[#0f572f]">
+                View all →
+              </Link>
+            </div>
+            <div className="mt-4 space-y-2">
+              {revisionTopics.length ? (
+                revisionTopics.map(({ topic, sectionTitle }) => (
+                  <Link
+                    key={topic._id}
+                    to={`/topics/${topic._id}`}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-[#E6EFE9] px-3.5 py-2.5 transition hover:bg-[#F4F9F6]"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-700">{topic.title}</p>
+                      <p className="text-[11px] text-gray-400">{sectionTitle}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#146B3A] ring-1 ring-emerald-200">
+                      {topic.revision === 'first'
+                        ? '1st Revision'
+                        : topic.revision === 'second'
+                        ? '2nd Revision'
+                        : 'Final Revision'}
+                    </span>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-gray-400">No topics in revision yet. Set a revision stage from a topic page.</p>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      ) : null}
 
       {/* Interview Questions + DSA problems / Roadmap */}
       <div className="grid gap-6 lg:grid-cols-2">

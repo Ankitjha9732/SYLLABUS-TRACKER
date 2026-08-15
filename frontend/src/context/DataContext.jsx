@@ -211,6 +211,28 @@ export const DataProvider = ({ children }) => {
     [refreshTreeAfterMutation]
   );
 
+  const updateTopicMeta = useCallback(
+    async (id, meta) => {
+      try {
+        const cached = syllabus?.sections
+          ?.flatMap((s) => s.topics || [])
+          .find((t) => String(t._id) === String(id));
+        const { data } = await api.put(`/syllabus/topic/${id}`, {
+          title: meta.title ?? cached?.title ?? '',
+          description: meta.description ?? cached?.description ?? '',
+          priority: meta.priority,
+          revision: meta.revision,
+          weak: meta.weak,
+        });
+        await refreshTreeAfterMutation();
+        return data;
+      } catch (err) {
+        throw new Error(getErrorMessage(err));
+      }
+    },
+    [syllabus, refreshTreeAfterMutation]
+  );
+
   const deleteTopic = useCallback(
     async (id) => {
       try {
@@ -386,6 +408,7 @@ export const DataProvider = ({ children }) => {
     createSection,
     createTopic,
     updateTopic,
+    updateTopicMeta,
     deleteTopic,
     deleteSection,
     fetchTopicDetail,
