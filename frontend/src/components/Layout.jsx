@@ -32,7 +32,7 @@ const Layout = () => {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#16834A] to-[#0f572f] text-white shadow-sm">
             <GraduationCap className="h-5 w-5" strokeWidth={2.5} />
           </span>
-          <span className="hidden text-sm font-bold tracking-tight text-gray-900 min-[420px]:block">Progress Tracker</span>
+          <span className="hidden text-sm font-bold tracking-tight text-gray-900 sm:block">Progress Tracker</span>
         </NavLink>
 
         <nav className="flex min-w-0 flex-1 items-center gap-1">
