@@ -1,4 +1,4 @@
-# 📚 Progress Tracker
+# 📚 Syllabus Tracker
 
 A production-ready **MERN** learning platform that turns a full syllabus into an actionable, trackable plan — **modules → topics → subtopics → status**, all wired to live progress bars, streaks, and charts.
 
@@ -39,7 +39,7 @@ Track your **MERN Stack**, **DSA** and **PCM** learning paths, mark subtopics as
 ## 📁 Project Structure
 
 ```text
-progress-tracker/
+syllabus-tracker/
 ├── frontend/                  # Vite + React app
 │   ├── public/                # static assets (favicon)
 │   └── src/
