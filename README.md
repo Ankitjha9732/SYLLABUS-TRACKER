@@ -6,6 +6,8 @@ Track your **MERN Stack**, **DSA** and **PCM** learning paths, mark subtopics as
 
 **Live app** → [https://syllabus-tracker-beta.vercel.app](https://syllabus-tracker-beta.vercel.app)
 
+<p align="center"><img src="preview.png" alt="Syllabus Tracker preview" width="720" /></p>
+
 ---
 
 ## ✨ Features
