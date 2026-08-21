@@ -259,6 +259,67 @@ export const DataProvider = ({ children }) => {
     [refreshTreeAfterMutation]
   );
 
+  // ---------- subtopic progress & content ----------
+  // @desc  Toggle a single subtopic's completion (subtopic-driven topics roll
+  //        the result up into topic / section / overall progress automatically)
+  const updateSubTopicStatus = useCallback(
+    async (subTopicId, completed) => {
+      try {
+        const { data } = await api.put(`/progress/subtopic/${subTopicId}`, { completed: !!completed });
+        await Promise.all([refreshSyllabus(), refreshStats()]);
+        return data;
+      } catch (err) {
+        throw new Error(getErrorMessage(err));
+      }
+    },
+    [refreshSyllabus, refreshStats]
+  );
+
+  const createSubTopic = useCallback(
+    async ({ topicId, title, description = '', difficulty = 'medium', estimatedTime = '' }) => {
+      try {
+        const { data } = await api.post('/syllabus/subtopic', {
+          topicId,
+          title,
+          description,
+          difficulty,
+          estimatedTime,
+        });
+        await refreshTreeAfterMutation();
+        return data;
+      } catch (err) {
+        throw new Error(getErrorMessage(err));
+      }
+    },
+    [refreshTreeAfterMutation]
+  );
+
+  const updateSubTopic = useCallback(
+    async (id, patch) => {
+      try {
+        const { data } = await api.put(`/syllabus/subtopic/${id}`, patch);
+        await refreshTreeAfterMutation();
+        return data;
+      } catch (err) {
+        throw new Error(getErrorMessage(err));
+      }
+    },
+    [refreshTreeAfterMutation]
+  );
+
+  const deleteSubTopic = useCallback(
+    async (id) => {
+      try {
+        const { data } = await api.delete(`/syllabus/subtopic/${id}`);
+        await refreshTreeAfterMutation();
+        return data;
+      } catch (err) {
+        throw new Error(getErrorMessage(err));
+      }
+    },
+    [refreshTreeAfterMutation]
+  );
+
   // ---------- topic detail ----------
   const fetchTopicDetail = useCallback(async (topicId) => {
     const { data } = await api.get(`/topics/${topicId}/detail`);
@@ -411,6 +472,10 @@ export const DataProvider = ({ children }) => {
     updateTopicMeta,
     deleteTopic,
     deleteSection,
+    updateSubTopicStatus,
+    createSubTopic,
+    updateSubTopic,
+    deleteSubTopic,
     fetchTopicDetail,
     createNote,
     updateNote,

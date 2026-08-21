@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, Check, ArrowRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, Pencil, Trash2, Check, ArrowRight, Search } from 'lucide-react';
 import { useData } from '../context/DataContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Spinner } from '../components/Loading.jsx';
@@ -33,11 +33,28 @@ export const Syllabus = () => {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
 
   const sections = syllabus?.sections || [];
   const totals = syllabus?.totals;
   const subject = subjectLabel(user?.subject);
   const isPCB = user?.subject === 'pcb';
+
+  const visibleSections = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const sectionsOut = sections.map((s) => {
+      const topics = (s.topics || []).filter((t) => {
+        const matchesQuery =
+          !q || t.title.toLowerCase().includes(q) || s.title.toLowerCase().includes(q);
+        const matchesFilter =
+          filter === 'all' ? true : filter === 'completed' ? !!t.completed : !t.completed;
+        return matchesQuery && matchesFilter;
+      });
+      return { ...s, topics };
+    });
+    return sectionsOut.filter((s) => s.topics.length > 0);
+  }, [sections, query, filter]);
 
   if (loading && !syllabus) {
     return (
@@ -150,14 +167,36 @@ export const Syllabus = () => {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-0 flex-1 sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search syllabus..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          />
+        </div>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          aria-label="Filter topics by completion"
+        >
+          <option value="all">All topics</option>
+          <option value="incomplete">Incomplete</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
       <div className="space-y-4">
         {!sections.length ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center">
             <p className="text-sm font-medium text-slate-700">Nothing here yet</p>
             <p className="mt-1 text-xs text-slate-400">Add a section to start building your syllabus.</p>
           </div>
-        ) : (
-          sections.map((section, si) => (
+        ) : visibleSections.length ? (
+          visibleSections.map((section, si) => (
             <SectionBlock
               key={section._id}
               section={section}
@@ -185,6 +224,11 @@ export const Syllabus = () => {
               }
             />
           ))
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center">
+            <p className="text-sm font-medium text-slate-700">No matching topics</p>
+            <p className="mt-1 text-xs text-slate-400">Try a different search or filter.</p>
+          </div>
         )}
       </div>
 
@@ -367,6 +411,11 @@ const TopicRow = ({ topic, index, isPCB, onToggle, onEdit, onDelete }) => {
             Weak
           </span>
         ) : null}
+        {topic.hasSubTopics ? (
+          <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+            {topic.subtopicDone}/{topic.subtopicTotal} sub
+          </span>
+        ) : null}
         {topic.isCustom ? (
           <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-brand-500">Custom</span>
         ) : null}
@@ -376,7 +425,7 @@ const TopicRow = ({ topic, index, isPCB, onToggle, onEdit, onDelete }) => {
         <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500" />
       </Link>
       <div className="hidden w-20 shrink-0 items-center gap-2 sm:flex">
-        <ProgressBar value={topic.completed ? 100 : 0} size="sm" />
+        <ProgressBar value={topic.hasSubTopics ? topic.progress : topic.completed ? 100 : 0} size="sm" />
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <button

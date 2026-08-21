@@ -55,6 +55,10 @@ const topicSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    practice: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

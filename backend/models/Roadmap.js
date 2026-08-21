@@ -23,7 +23,7 @@ const roadmapSchema = new mongoose.Schema(
     subject: {
       type: String,
       required: [true, 'Subject is required'],
-      enum: ['mern', 'dsa', 'pcm', 'pcb'],
+      enum: ['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml'],
       lowercase: true,
       trim: true,
     },

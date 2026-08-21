@@ -12,6 +12,11 @@ const progressSchema = new mongoose.Schema(
       ref: 'Topic',
       required: true,
     },
+    subTopicId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'SubTopic',
+      default: null,
+    },
     roadmapId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Roadmap',
@@ -31,7 +36,9 @@ const progressSchema = new mongoose.Schema(
   }
 );
 
-progressSchema.index({ userId: 1, topicId: 1 }, { unique: true });
+// One record per (user, topic) for topic-level completion plus one per
+// (user, topic, subtopic) when a topic is tracked at the subtopic level.
+progressSchema.index({ userId: 1, topicId: 1, subTopicId: 1 }, { unique: true });
 
 const Progress = mongoose.model('Progress', progressSchema);
 

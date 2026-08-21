@@ -22,7 +22,7 @@ export const registerValidation = [
     .withMessage('Please confirm your password')
     .custom((val, { req }) => val === req.body.password)
     .withMessage('Passwords do not match'),
-  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb']).withMessage('Subject must be mern, dsa, pcm or pcb'),
+  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml']).withMessage('Subject must be mern, dsa, pcm, pcb, python or ml'),
 ];
 
 export const loginValidation = [
@@ -38,7 +38,7 @@ export const roadmapValidation = [
   body('title').trim().notEmpty().withMessage('Roadmap title is required').isLength({ max: 120 }).withMessage('Title cannot exceed 120 characters'),
   body('description').optional().trim().isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters'),
   body('icon').optional().trim().isLength({ max: 40 }).withMessage('Icon cannot exceed 40 characters'),
-  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb']).withMessage('Subject must be mern, dsa, pcm or pcb'),
+  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml']).withMessage('Subject must be mern, dsa, pcm, pcb, python or ml'),
   body('targetDate').optional().custom((val) => val === '' || !Number.isNaN(Date.parse(val))).withMessage('Target date is invalid'),
 ];
 
@@ -65,6 +65,7 @@ export const topicUpdateValidation = [
   body('priority').optional().isIn(['high', 'medium', 'low']).withMessage('Priority must be high, medium or low'),
   body('revision').optional().isIn(['none', 'first', 'second', 'final']).withMessage('Revision must be none, first, second or final'),
   body('weak').optional().isBoolean().withMessage('weak must be a boolean'),
+  body('practice').optional().isBoolean().withMessage('practice must be a boolean'),
 ];
 
 export const subTopicValidation = [
@@ -140,6 +141,26 @@ export const notesValidation = [
 export const topicProgressValidation = [
   param('topicId').custom(isValidObjectId).withMessage('Invalid topic id'),
   body('completed').isBoolean().withMessage('completed must be a boolean'),
+];
+
+export const subTopicProgressValidation = [
+  param('subTopicId').custom(isValidObjectId).withMessage('Invalid subtopic id'),
+  body('completed').isBoolean().withMessage('completed must be a boolean'),
+];
+
+export const subTopicCreateValidation = [
+  body('topicId').custom(isValidObjectId).withMessage('Please select a valid topic'),
+  body('title').trim().notEmpty().withMessage('SubTopic title is required').isLength({ max: 120 }).withMessage('Title cannot exceed 120 characters'),
+  body('description').optional().trim().isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters'),
+  body('difficulty').optional().isIn(['easy', 'medium', 'hard']).withMessage('Difficulty must be easy, medium or hard'),
+  body('estimatedTime').optional().trim().isLength({ max: 30 }).withMessage('Estimated time cannot exceed 30 characters'),
+];
+
+export const subTopicUpdateValidation = [
+  body('title').optional().trim().notEmpty().withMessage('SubTopic title is required').isLength({ max: 120 }).withMessage('Title cannot exceed 120 characters'),
+  body('description').optional().trim().isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters'),
+  body('difficulty').optional().isIn(['easy', 'medium', 'hard']).withMessage('Difficulty must be easy, medium or hard'),
+  body('estimatedTime').optional().trim().isLength({ max: 30 }).withMessage('Estimated time cannot exceed 30 characters'),
 ];
 
 export const topicIdParam = [param('topicId').custom(isValidObjectId).withMessage('Invalid topic id')];

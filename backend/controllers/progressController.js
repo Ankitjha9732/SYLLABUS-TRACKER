@@ -2,6 +2,7 @@ import Progress from '../models/Progress.js';
 import Roadmap from '../models/Roadmap.js';
 import Section from '../models/Section.js';
 import Topic from '../models/Topic.js';
+import SubTopic from '../models/SubTopic.js';
 import Note from '../models/Note.js';
 import Question from '../models/Question.js';
 import Problem from '../models/Problem.js';
@@ -117,20 +118,67 @@ export const updateTopicProgress = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Topic not found' });
     }
 
+    const complete = completed === true;
+    const now = new Date();
     const roadmapId = topic.roadmapId || null;
-    const progress = await Progress.findOneAndUpdate(
-      { userId: req.user.id, topicId },
+
+    await Progress.findOneAndUpdate(
+      { userId: req.user.id, topicId, subTopicId: null },
       {
-        $set: {
-          completed: completed === true,
-          completedAt: completed ? new Date() : null,
-        },
+        $set: { completed: complete, completedAt: complete ? now : null },
         $setOnInsert: { roadmapId },
       },
       { upsert: true, new: true }
     );
 
-    res.json({ success: true, message: 'Progress updated', progress });
+    // Keep subtopic-level records in sync so a single topic toggle stays
+    // consistent with the derived subtopic-driven progress.
+    const subtopics = await SubTopic.find({ topicId }).select('_id').lean();
+    if (subtopics.length) {
+      await Promise.all(
+        subtopics.map((sub) =>
+          Progress.findOneAndUpdate(
+            { userId: req.user.id, topicId, subTopicId: sub._id },
+            { $set: { completed: complete, completedAt: complete ? now : null }, $setOnInsert: { roadmapId } },
+            { upsert: true, new: true }
+          )
+        )
+      );
+    }
+
+    res.json({ success: true, message: 'Progress updated' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Set a subtopic's completion (feeds topic/section/subject progress)
+// @route   PUT /api/progress/subtopic/:subTopicId
+// @access  Private
+export const updateSubTopicProgress = async (req, res, next) => {
+  try {
+    const { subTopicId } = req.params;
+    const { completed } = req.body;
+
+    const subtopic = await SubTopic.findById(subTopicId);
+    if (!subtopic) return res.status(404).json({ success: false, message: 'SubTopic not found' });
+
+    const topic = await Topic.findById(subtopic.topicId);
+    if (!topic || !isVisibleContent(topic, req.user.id)) {
+      return res.status(403).json({ success: false, message: 'SubTopic not found' });
+    }
+
+    const complete = completed === true;
+    const updated = await Progress.findOneAndUpdate(
+      { userId: req.user.id, topicId: topic._id, subTopicId },
+      {
+        $set: { completed: complete, completedAt: complete ? new Date() : null },
+        $setOnInsert: { roadmapId: topic.roadmapId || null },
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({ success: true, message: 'Progress updated', progress: updated });
   } catch (error) {
     next(error);
   }

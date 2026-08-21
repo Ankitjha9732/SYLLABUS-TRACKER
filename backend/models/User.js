@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
     },
     subject: {
       type: String,
-      enum: ['mern', 'dsa', 'pcm', 'pcb'],
+      enum: ['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml'],
       required: [true, 'Subject is required'],
       lowercase: true,
       trim: true,
@@ -45,6 +45,12 @@ const userSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Topic',
+      },
+    ],
+    hiddenSubTopicIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'SubTopic',
       },
     ],
   },

@@ -1,10 +1,11 @@
 import Roadmap from '../models/Roadmap.js';
 import Topic from '../models/Topic.js';
+import SubTopic from '../models/SubTopic.js';
 import Progress from '../models/Progress.js';
 import Note from '../models/Note.js';
 import Question from '../models/Question.js';
 import Problem from '../models/Problem.js';
-import { getContentRoadmapId } from '../utils/roadmapBuilder.js';
+import { getContentRoadmapId, getHiddenIds } from '../utils/roadmapBuilder.js';
 
 const resolveTopic = async (userId, subject, topicId) => {
   const template = await Roadmap.findOne({ subject, isTemplate: true, linked: { $ne: true } });
@@ -28,19 +29,56 @@ export const getTopicDetail = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Topic not found' });
     }
 
-    const [progress, notes, questions, problems] = await Promise.all([
-      Progress.findOne({ userId, topicId }),
+    const hidden = await getHiddenIds(userId);
+    if (hidden.topics.has(String(topic._id))) {
+      return res.status(404).json({ success: false, message: 'Topic not found' });
+    }
+
+    const [progress, rawSubtopics, notes, questions, problems] = await Promise.all([
+      Progress.findOne({ userId, topicId, subTopicId: null }),
+      SubTopic.find({ topicId }).sort({ order: 1, createdAt: 1 }).lean(),
       Note.find({ userId, topicId }).sort({ createdAt: -1 }).lean(),
       Question.find({ userId, topicId }).sort({ createdAt: 1 }).lean(),
       Problem.find({ userId, topicId }).sort({ createdAt: 1 }).lean(),
     ]);
 
+    const subProgress = await Progress.find({ userId, topicId, subTopicId: { $ne: null } }).lean();
+    const subProgressMap = new Map(subProgress.map((p) => [String(p.subTopicId), p]));
+
+    const subtopics = rawSubtopics
+      .filter(
+        (s) =>
+          (!s.createdBy || String(s.createdBy) === String(userId)) &&
+          !hidden.subtopics.has(String(s._id))
+      )
+      .map((s) => ({
+        ...s,
+        completed: !!subProgressMap.get(String(s._id))?.completed,
+        completedAt: subProgressMap.get(String(s._id))?.completedAt || null,
+      }));
+
+    const subDone = subtopics.filter((s) => s.completed).length;
+    const hasSubTopics = subtopics.length > 0;
+    const allDone = hasSubTopics && subDone === subtopics.length;
+    const topicCompleted = hasSubTopics ? allDone : !!progress?.completed;
+    const topicCompletedAt = hasSubTopics
+      ? (subtopics
+          .filter((s) => s.completed)
+          .map((s) => s.completedAt)
+          .sort((a, b) => new Date(b) - new Date(a))[0] || null)
+      : progress?.completedAt || null;
+
     res.json({
       success: true,
       topic: {
         ...topic.toObject(),
-        completed: !!progress?.completed,
-        completedAt: progress?.completedAt || null,
+        completed: topicCompleted,
+        completedAt: topicCompletedAt,
+        progress: hasSubTopics ? Math.round((subDone / subtopics.length) * 100) : topicCompleted ? 100 : 0,
+        subtopics,
+        subtopicTotal: subtopics.length,
+        subtopicDone: subDone,
+        hasSubTopics,
         isDSA: req.user.subject === 'dsa',
       },
       notes,

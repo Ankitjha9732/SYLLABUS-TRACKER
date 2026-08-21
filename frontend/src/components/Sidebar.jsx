@@ -9,6 +9,8 @@ import {
   BrainCircuit,
   Atom,
   Leaf,
+  Server,
+  Brain,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -22,6 +24,8 @@ export const SUBJECTS = {
   dsa: { label: 'DSA', icon: BrainCircuit, badge: 'bg-teal-50 text-teal-700 ring-teal-200' },
   pcm: { label: 'PCM', icon: Atom, badge: 'bg-[#F4F9F6] text-[#146B3A] ring-[#16834A]/30' },
   pcb: { label: 'PCB (NEET)', icon: Leaf, badge: 'bg-violet-50 text-violet-700 ring-violet-200' },
+  python: { label: 'Python Backend', icon: Server, badge: 'bg-sky-50 text-sky-700 ring-sky-200' },
+  ml: { label: 'Machine Learning', icon: Brain, badge: 'bg-rose-50 text-rose-700 ring-rose-200' },
 };
 
 export const subjectLabel = (subject) => SUBJECTS[subject]?.label || 'Learning';

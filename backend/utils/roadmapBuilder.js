@@ -1,6 +1,7 @@
 import Roadmap from '../models/Roadmap.js';
 import Section from '../models/Section.js';
 import Topic from '../models/Topic.js';
+import SubTopic from '../models/SubTopic.js';
 import Progress from '../models/Progress.js';
 import User from '../models/User.js';
 
@@ -20,45 +21,108 @@ const visibilityFilter = (userId) => ({ $or: [{ createdBy: null }, { createdBy: 
  * is never touched.
  */
 export const getHiddenIds = async (userId) => {
-  const user = await User.findById(userId).select('hiddenSectionIds hiddenTopicIds').lean();
+  const user = await User.findById(userId).select('hiddenSectionIds hiddenTopicIds hiddenSubTopicIds').lean();
   return {
     sections: new Set((user?.hiddenSectionIds || []).map(String)),
     topics: new Set((user?.hiddenTopicIds || []).map(String)),
+    subtopics: new Set((user?.hiddenSubTopicIds || []).map(String)),
   };
 };
 
+const roundPct = (done, total) => (total === 0 ? 0 : Math.round((done / total) * 100));
+
 /**
- * Builds the Section -> Topic tree for a single roadmap and merges the given
- * user's topic-level progress. Optional (advanced) content is included but
- * excluded from totals so it never counts toward progress. Sections and topics
- * the user deleted from their own syllabus are excluded.
+ * Builds the Section -> Topic -> SubTopic tree for a single roadmap and merges
+ * the given user's progress. Topic completion is automatically derived from its
+ * subtopics when the topic has any; otherwise the topic-level toggle is used.
+ * Optional (advanced/project) content is included but excluded from totals so
+ * it never counts toward progress. Content the user removed from their own
+ * syllabus is excluded.
  */
 export const buildRoadmapTree = async (userId, roadmap) => {
   const contentId = contentRoadmapId(roadmap);
   const visibility = visibilityFilter(userId);
   const hidden = await getHiddenIds(userId);
 
-  const [rawSections, rawTopics, progress] = await Promise.all([
+  const [rawSections, rawTopics, rawSubtopics, progress] = await Promise.all([
     Section.find({ roadmapId: contentId, ...visibility }).sort({ order: 1, createdAt: 1 }).lean(),
     Topic.find({ roadmapId: contentId, ...visibility }).sort({ order: 1, createdAt: 1 }).lean(),
-    Progress.find({ userId }).select('topicId completed completedAt').lean(),
+    SubTopic.find({ roadmapId: contentId, ...visibility }).sort({ order: 1, createdAt: 1 }).lean(),
+    Progress.find({ userId }).select('topicId subTopicId completed completedAt').lean(),
   ]);
 
   const sections = rawSections.filter((s) => !hidden.sections.has(String(s._id)));
   const topics = rawTopics.filter(
     (t) => !hidden.topics.has(String(t._id)) && !hidden.sections.has(String(t.sectionId))
   );
+  const visibleTopicIds = new Set(topics.map((t) => String(t._id)));
+  const subtopics = rawSubtopics.filter(
+    (sub) =>
+      visibleTopicIds.has(String(sub.topicId)) &&
+      !hidden.subtopics.has(String(sub._id)) &&
+      !hidden.topics.has(String(sub.topicId))
+  );
 
-  const progressMap = new Map(progress.map((p) => [String(p.topicId), p]));
+  const topicProgress = new Map();
+  const subProgress = new Map();
+  progress.forEach((p) => {
+    if (p.subTopicId) subProgress.set(String(p.subTopicId), p);
+    else topicProgress.set(String(p.topicId), p);
+  });
+
+  const topicSubMap = new Map();
+  subtopics.forEach((sub) => {
+    const list = topicSubMap.get(String(sub.topicId)) || [];
+    list.push(sub);
+    topicSubMap.set(String(sub.topicId), list);
+  });
+
   const topicMap = new Map(
     topics.map((t) => {
-      const prog = progressMap.get(String(t._id));
+      const subs = topicSubMap.get(String(t._id)) || [];
+      if (subs.length > 0) {
+        const withProgress = subs.map((s) => {
+          const prog = subProgress.get(String(s._id));
+          return {
+            ...s,
+            completed: !!prog?.completed,
+            completedAt: prog?.completedAt || null,
+          };
+        });
+        const subDone = withProgress.filter((s) => s.completed).length;
+        const allDone = subDone === withProgress.length;
+        const lastCompletedAt = withProgress
+          .filter((s) => s.completed)
+          .map((s) => s.completedAt)
+          .sort((a, b) => new Date(b) - new Date(a))[0] || null;
+        return [
+          String(t._id),
+          {
+            ...t,
+            subtopics: withProgress,
+            subtopicTotal: withProgress.length,
+            subtopicDone: subDone,
+            hasSubTopics: true,
+            completed: allDone,
+            completedAt: lastCompletedAt,
+            progress: roundPct(subDone, withProgress.length),
+          },
+        ];
+      }
+
+      const prog = topicProgress.get(String(t._id));
+      const completed = !!prog?.completed;
       return [
         String(t._id),
         {
           ...t,
-          completed: !!prog?.completed,
+          subtopics: [],
+          subtopicTotal: 0,
+          subtopicDone: 0,
+          hasSubTopics: false,
+          completed,
           completedAt: prog?.completedAt || null,
+          progress: completed ? 100 : 0,
         },
       ];
     })
@@ -85,7 +149,7 @@ export const buildRoadmapTree = async (userId, roadmap) => {
       topics: sTopics,
       total,
       completed,
-      progress: total === 0 ? 0 : Math.round((completed / total) * 100),
+      progress: roundPct(completed, total),
     };
   });
 
@@ -104,7 +168,7 @@ export const buildRoadmapTree = async (userId, roadmap) => {
       topicsTotal: topicCount,
       topicsCompleted: completedCount,
       notStarted: topicCount - completedCount,
-      overallProgress: topicCount === 0 ? 0 : Math.round((completedCount / topicCount) * 100),
+      overallProgress: roundPct(completedCount, topicCount),
     },
   };
 };

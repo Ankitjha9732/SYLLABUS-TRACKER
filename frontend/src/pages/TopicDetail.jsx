@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Code2,
   ListChecks,
+  Clock,
 } from 'lucide-react';
 import { useData } from '../context/DataContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -44,6 +45,10 @@ export const TopicDetail = () => {
     updateTopicStatus,
     updateTopicMeta,
     fetchTopicDetail,
+    updateSubTopicStatus,
+    createSubTopic,
+    updateSubTopic,
+    deleteSubTopic,
     createNote,
     updateNote,
     deleteNote,
@@ -63,6 +68,7 @@ export const TopicDetail = () => {
   const [noteModal, setNoteModal] = useState(null); // { mode, item }
   const [questionModal, setQuestionModal] = useState(null);
   const [problemModal, setProblemModal] = useState(null);
+  const [subTopicModal, setSubTopicModal] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -85,10 +91,13 @@ export const TopicDetail = () => {
 
   const topic = detail?.topic || null;
   const isDSA = topic?.isDSA;
+  const isPyOrMl = user?.subject === 'python' || user?.subject === 'ml';
+  const showSubTopics = isPyOrMl || topic?.hasSubTopics || (topic?.subtopics?.length ?? 0) > 0;
 
   const notes = detail?.notes || [];
   const questions = detail?.questions || [];
   const problems = detail?.problems || [];
+  const subtopics = topic?.subtopics || [];
 
   const questionsDone = useMemo(() => questions.filter((q) => q.completed).length, [questions]);
   const problemsDone = useMemo(() => problems.filter((p) => p.completed).length, [problems]);
@@ -224,6 +233,44 @@ export const TopicDetail = () => {
     }
   };
 
+  const toggleSubTopic = async (sub) => {
+    const next = !sub.completed;
+    setDetail((d) => ({
+      ...d,
+      topic: {
+        ...d.topic,
+        subtopics: (d.topic.subtopics || []).map((x) =>
+          x._id === sub._id ? { ...x, completed: next, completedAt: next ? new Date().toISOString() : null } : x
+        ),
+      },
+    }));
+    try {
+      await updateSubTopicStatus(sub._id, next);
+      await reload();
+    } catch (err) {
+      toast.error(err.message);
+      await reload();
+    }
+  };
+
+  const submitSubTopic = async (form) => {
+    if (subTopicModal?.mode === 'edit') {
+      await run(
+        () =>
+          updateSubTopic(subTopicModal.item._id, {
+            title: form.title,
+            description: form.description || '',
+            difficulty: form.difficulty,
+            estimatedTime: form.estimatedTime || '',
+          }),
+        'Subtopic updated'
+      );
+    } else {
+      await run(() => createSubTopic({ topicId: topic._id, ...form }), 'Subtopic added');
+    }
+    setSubTopicModal(null);
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -231,6 +278,7 @@ export const TopicDetail = () => {
       const { kind, id } = deleteTarget;
       if (kind === 'note') await deleteNote(id);
       else if (kind === 'question') await deleteQuestion(id);
+      else if (kind === 'subtopic') await deleteSubTopic(id);
       else await deleteProblem(id);
       toast.success('Deleted');
       setDeleteTarget(null);
@@ -332,6 +380,66 @@ export const TopicDetail = () => {
           </div>
         ) : null}
       </div>
+
+      {/* Subtopics */}
+      {showSubTopics ? (
+        <SectionCard
+          icon={ListChecks}
+          title="Subtopics"
+          countLabel={`${subtopics.filter((s) => s.completed).length}/${subtopics.length} done`}
+          accent="text-amber-600 bg-amber-50"
+          actionLabel="Add Subtopic"
+          onAdd={() => setSubTopicModal({ mode: 'create', item: { title: '', description: '', difficulty: 'medium', estimatedTime: '' } })}
+        >
+          {subtopics.length ? (
+            <div className="space-y-2">
+              {subtopics.map((sub) => (
+                <div key={sub._id} className="group flex items-start gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3">
+                  <Checkbox
+                    checked={sub.completed}
+                    onClick={() => toggleSubTopic(sub)}
+                    title={sub.completed ? 'Mark subtopic as not completed' : 'Mark subtopic as completed'}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className={`break-words text-sm ${sub.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                      {sub.title}
+                    </p>
+                    {sub.description ? <p className="mt-1 break-words text-xs text-slate-500">{sub.description}</p> : null}
+                    {(sub.difficulty || sub.estimatedTime) ? (
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        {sub.difficulty ? (
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                              DIFFICULTY_META[sub.difficulty]?.className || 'border-slate-200 bg-slate-50 text-slate-500'
+                            }`}
+                          >
+                            {sub.difficulty}
+                          </span>
+                        ) : null}
+                        {sub.estimatedTime ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400">
+                            <Clock className="h-3 w-3" /> {sub.estimatedTime}
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <IconBtn title="Edit" onClick={() => setSubTopicModal({ mode: 'edit', item: sub })}>
+                      <Pencil className="h-4 w-4" />
+                    </IconBtn>
+                    <IconBtn danger title="Delete" onClick={() => setDeleteTarget({ kind: 'subtopic', id: sub._id })}>
+                      <Trash2 className="h-4 w-4" />
+                    </IconBtn>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Empty hint="Break this topic into subtopics to track granular progress." />
+          )}
+        </SectionCard>
+      ) : null}
 
       {/* Important Notes */}
       <SectionCard
@@ -500,6 +608,31 @@ export const TopicDetail = () => {
             : { title: '', link: '', difficulty: 'medium', note: '' }
         }
         onSubmit={submitProblem}
+        requiredKey="title"
+      />
+
+      {/* Subtopic modal */}
+      <ContentModal
+        open={subTopicModal !== null}
+        onClose={() => setSubTopicModal(null)}
+        title={subTopicModal?.mode === 'edit' ? 'Edit Subtopic' : 'Add Subtopic'}
+        fields={[
+          { key: 'title', label: 'Title' },
+          { key: 'description', label: 'Description', textarea: true },
+          { key: 'difficulty', label: 'Difficulty', select: ['easy', 'medium', 'hard'] },
+          { key: 'estimatedTime', label: 'Estimated time' },
+        ]}
+        initial={
+          subTopicModal?.mode === 'edit'
+            ? {
+                title: subTopicModal.item.title,
+                description: subTopicModal.item.description || '',
+                difficulty: subTopicModal.item.difficulty || 'medium',
+                estimatedTime: subTopicModal.item.estimatedTime || '',
+              }
+            : { title: '', description: '', difficulty: 'medium', estimatedTime: '' }
+        }
+        onSubmit={submitSubTopic}
         requiredKey="title"
       />
 

@@ -7,9 +7,21 @@ import {
   createTopic,
   updateTopic,
   deleteTopic,
+  createSubTopic,
+  updateSubTopic,
+  deleteSubTopic,
 } from '../controllers/syllabusController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { topicValidation, topicUpdateValidation, sectionCreateValidation, sectionIdParam, objectIdParam, validate } from '../middleware/validationMiddleware.js';
+import {
+  topicValidation,
+  topicUpdateValidation,
+  subTopicCreateValidation,
+  subTopicUpdateValidation,
+  sectionCreateValidation,
+  sectionIdParam,
+  objectIdParam,
+  validate,
+} from '../middleware/validationMiddleware.js';
 
 const router = Router();
 
@@ -25,5 +37,10 @@ router
   .route('/topic/:id')
   .put(objectIdParam, topicUpdateValidation, validate, updateTopic)
   .delete(objectIdParam, validate, deleteTopic);
+router.post('/subtopic', subTopicCreateValidation, validate, createSubTopic);
+router
+  .route('/subtopic/:id')
+  .put(objectIdParam, subTopicUpdateValidation, validate, updateSubTopic)
+  .delete(objectIdParam, validate, deleteSubTopic);
 
 export default router;
