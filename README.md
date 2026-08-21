@@ -1,10 +1,12 @@
-# 📚 Progress Tracker
+# 📚 Syllabus Tracker
 
 A production-ready **MERN** learning platform that turns a full syllabus into an actionable, trackable plan — **modules → topics → subtopics → status**, all wired to live progress bars, streaks, and charts.
 
 Track your **MERN Stack**, **DSA** and **PCM** learning paths, mark subtopics as you go, keep private notes, and stay consistent with streaks and a GitHub-style activity heatmap. Responsive across mobile and desktop, deployed and live.
 
 **Live app** → [https://syllabus-tracker-beta.vercel.app](https://syllabus-tracker-beta.vercel.app)
+
+<p align="center"><img src="preview.png" alt="Syllabus Tracker preview" width="720" /></p>
 
 ---
 
@@ -39,7 +41,7 @@ Track your **MERN Stack**, **DSA** and **PCM** learning paths, mark subtopics as
 ## 📁 Project Structure
 
 ```text
-progress-tracker/
+syllabus-tracker/
 ├── frontend/                  # Vite + React app
 │   ├── public/                # static assets (favicon)
 │   └── src/
