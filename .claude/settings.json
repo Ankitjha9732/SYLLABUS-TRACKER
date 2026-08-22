@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "Bash(npm audit *)"
+    ],
+    "additionalDirectories": [
+      "\\C:\\Users\\ankit\\OneDrive\\Documents\\PROGRESS TRACKER\\backend\\config"
     ]
   }
 }
