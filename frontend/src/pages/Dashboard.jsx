@@ -80,7 +80,9 @@ export const Dashboard = () => {
   const subject = SUBJECTS[user?.subject] || SUBJECTS.mern;
   const subjectText = subjectLabel(user?.subject);
   const isDSA = user?.subject === 'dsa';
-  const isPCB = user?.subject === 'pcb' || user?.subject === 'gate';
+  const isPCB = user?.subject === 'pcb';
+  const isGate = user?.subject === 'gate';
+  const showMeta = isPCB || isGate;
   const totals = stats?.totals;
   const progress = totals?.overallProgress ?? 0;
   const sections = stats?.sectionStats || syllabus?.sections || [];
@@ -224,7 +226,7 @@ export const Dashboard = () => {
         />
       </div>
 
-      {/* Subject-wise progress (PCB) */}
+      {/* Subject-wise progress (PCB only) */}
       {isPCB ? (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -383,8 +385,8 @@ export const Dashboard = () => {
         </motion.div>
       </div>
 
-      {/* Weak topics + Topics for revision (PCB) */}
-      {isPCB ? (
+      {/* Weak topics + Topics for revision (PCB & GATE) */}
+      {showMeta ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, y: 10 }}

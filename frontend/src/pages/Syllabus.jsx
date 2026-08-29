@@ -155,7 +155,32 @@ export const Syllabus = () => {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <ProgressBar value={totals?.overallProgress ?? 0} className="w-full max-w-xs" showLabel />
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <div className="relative h-14 w-14 shrink-0">
+            <svg width={56} height={56} className="-rotate-90">
+              <circle cx={28} cy={28} r={22} fill="none" stroke="#DDF4E8" strokeWidth="6" />
+              <motion.circle
+                cx={28} cy={28} r={22} fill="none" stroke="#16834A" strokeWidth="6" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 22}
+                initial={{ strokeDashoffset: 2 * Math.PI * 22 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 22 * (1 - (totals?.overallProgress ?? 0) / 100) }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-[#146B3A]">
+              {totals?.overallProgress ?? 0}%
+            </span>
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-extrabold text-slate-800">{totals?.topicsCompleted ?? 0}</span>
+              <span className="text-sm text-slate-400">/ {totals?.topicsTotal ?? 0} topics</span>
+            </div>
+            <div className="mt-1.5 w-40 max-w-full">
+              <ProgressBar value={totals?.overallProgress ?? 0} size="md" />
+            </div>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -177,16 +202,26 @@ export const Syllabus = () => {
             className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
           />
         </div>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          aria-label="Filter topics by completion"
-        >
-          <option value="all">All topics</option>
-          <option value="incomplete">Incomplete</option>
-          <option value="completed">Completed</option>
-        </select>
+        <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white p-0.5">
+          {[
+            { value: 'all', label: 'All' },
+            { value: 'incomplete', label: 'Incomplete' },
+            { value: 'completed', label: 'Done' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setFilter(opt.value)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                filter === opt.value
+                  ? 'bg-[#146B3A] text-white shadow-sm'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -315,8 +350,13 @@ const SectionBlock = ({ section, index, isPCB, onAddTopic, onToggle, onSectionTi
             </p>
           </div>
         </button>
-        <div className="hidden w-28 shrink-0 sm:block">
-          <ProgressBar value={section.progress} size="sm" />
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#16834A] bg-[#F4F9F6]">
+            <span className="text-[10px] font-bold text-[#146B3A]">{section.progress}</span>
+          </div>
+          <div className="hidden w-20 sm:block">
+            <ProgressBar value={section.progress} size="sm" />
+          </div>
         </div>
         {tickTargets.length ? (
           <CheckTopicButton
@@ -424,8 +464,19 @@ const TopicRow = ({ topic, index, isPCB, onToggle, onEdit, onDelete }) => {
         ) : null}
         <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500" />
       </Link>
-      <div className="hidden w-20 shrink-0 items-center gap-2 sm:flex">
-        <ProgressBar value={topic.hasSubTopics ? topic.progress : topic.completed ? 100 : 0} size="sm" />
+      <div className="flex shrink-0 items-center gap-2">
+        {topic.hasSubTopics || topic.completed ? (
+          <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+            (topic.hasSubTopics ? topic.progress : 100) === 100
+              ? 'bg-[#146B3A] text-white'
+              : 'bg-[#F4F9F6] text-[#146B3A] ring-1 ring-[#16834A]/20'
+          }`}>
+            {topic.hasSubTopics ? topic.progress : 100}%
+          </span>
+        ) : null}
+        <div className="hidden w-16 sm:block">
+          <ProgressBar value={topic.hasSubTopics ? topic.progress : topic.completed ? 100 : 0} size="sm" />
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <button

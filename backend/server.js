@@ -29,10 +29,12 @@ app.use((req, res, next) => {
 });
 
 // CORS - use configured origin
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+const envOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map((s) => String(s || '').trim().replace(/\/+$/, ''))
   .filter(Boolean);
+const devOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+const allowedOrigins = [...new Set([...envOrigins, ...devOrigins])];
 
 app.use(
   cors({
