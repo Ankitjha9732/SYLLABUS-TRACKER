@@ -26,6 +26,7 @@ export const SUBJECTS = {
   pcb: { label: 'PCB (NEET)', icon: Leaf, badge: 'bg-violet-50 text-violet-700 ring-violet-200' },
   python: { label: 'Python Backend', icon: Server, badge: 'bg-sky-50 text-sky-700 ring-sky-200' },
   ml: { label: 'Machine Learning', icon: Brain, badge: 'bg-rose-50 text-rose-700 ring-rose-200' },
+  gate: { label: 'GATE CS 2027', icon: GraduationCap, badge: 'bg-orange-50 text-orange-700 ring-orange-200' },
 };
 
 export const subjectLabel = (subject) => SUBJECTS[subject]?.label || 'Learning';

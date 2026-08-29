@@ -22,7 +22,7 @@ export const registerValidation = [
     .withMessage('Please confirm your password')
     .custom((val, { req }) => val === req.body.password)
     .withMessage('Passwords do not match'),
-  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml']).withMessage('Subject must be mern, dsa, pcm, pcb, python or ml'),
+  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml', 'gate']).withMessage('Subject must be mern, dsa, pcm, pcb, python, ml or gate'),
 ];
 
 export const loginValidation = [
@@ -38,7 +38,7 @@ export const roadmapValidation = [
   body('title').trim().notEmpty().withMessage('Roadmap title is required').isLength({ max: 120 }).withMessage('Title cannot exceed 120 characters'),
   body('description').optional().trim().isLength({ max: 1000 }).withMessage('Description cannot exceed 1000 characters'),
   body('icon').optional().trim().isLength({ max: 40 }).withMessage('Icon cannot exceed 40 characters'),
-  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml']).withMessage('Subject must be mern, dsa, pcm, pcb, python or ml'),
+  body('subject').isIn(['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml', 'gate']).withMessage('Subject must be mern, dsa, pcm, pcb, python, ml or gate'),
   body('targetDate').optional().custom((val) => val === '' || !Number.isNaN(Date.parse(val))).withMessage('Target date is invalid'),
 ];
 

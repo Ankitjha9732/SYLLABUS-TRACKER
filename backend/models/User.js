@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
   },
   subject: {
     type: String,
-    enum: ['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml'],
+    enum: ['mern', 'dsa', 'pcm', 'pcb', 'python', 'ml', 'gate'],
     required: [true, 'Subject is required'],
     lowercase: true,
     trim: true,

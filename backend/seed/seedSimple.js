@@ -12,6 +12,7 @@ import {
 } from './seedData.js';
 import { buildPythonBackendTemplate } from './pythonBackendData.js';
 import { buildMachineLearningTemplate } from './machineLearningData.js';
+import { buildGateTemplate } from './gateData.js';
 
 dotenv.config();
 
@@ -134,6 +135,9 @@ const seed = async () => {
 
     console.log('Seeding Machine Learning template...');
     await createTemplate(buildMachineLearningTemplate());
+
+    console.log('Seeding GATE CS 2027 template...');
+    await createTemplate(buildGateTemplate());
 
     const counts = await Promise.all([
       Roadmap.countDocuments(),

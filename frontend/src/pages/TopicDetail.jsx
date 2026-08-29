@@ -59,7 +59,7 @@ export const TopicDetail = () => {
     updateProblem,
     deleteProblem,
   } = useData();
-  const isPCB = user?.subject === 'pcb';
+  const isPCB = user?.subject === 'pcb' || user?.subject === 'gate';
 
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);

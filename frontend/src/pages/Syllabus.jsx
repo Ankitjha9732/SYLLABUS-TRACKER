@@ -39,7 +39,7 @@ export const Syllabus = () => {
   const sections = syllabus?.sections || [];
   const totals = syllabus?.totals;
   const subject = subjectLabel(user?.subject);
-  const isPCB = user?.subject === 'pcb';
+  const isPCB = user?.subject === 'pcb' || user?.subject === 'gate';
 
   const visibleSections = useMemo(() => {
     const q = query.trim().toLowerCase();

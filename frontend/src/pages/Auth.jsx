@@ -651,6 +651,7 @@ const SUBJECT_OPTIONS = [
   { key: 'python', label: 'Python Backend', description: 'FastAPI · Databases · Deployment', icon: Server },
   { key: 'ml', label: 'Machine Learning', description: 'From Math to MLOps & GenAI', icon: Brain },
   { key: 'dsa', label: 'DSA', description: 'Data Structures & Algorithms', icon: Network },
+  { key: 'gate', label: 'GATE CS 2027', description: 'Computer Science · IT · GATE Preparation', icon: GraduationCap },
   { key: 'pcm', label: 'PCM', description: 'Physics · Chemistry · Mathematics', icon: Atom },
   { key: 'pcb', label: 'PCB (NEET)', description: 'Physics · Chemistry · Biology', icon: Leaf },
 ];

@@ -80,7 +80,7 @@ export const Dashboard = () => {
   const subject = SUBJECTS[user?.subject] || SUBJECTS.mern;
   const subjectText = subjectLabel(user?.subject);
   const isDSA = user?.subject === 'dsa';
-  const isPCB = user?.subject === 'pcb';
+  const isPCB = user?.subject === 'pcb' || user?.subject === 'gate';
   const totals = stats?.totals;
   const progress = totals?.overallProgress ?? 0;
   const sections = stats?.sectionStats || syllabus?.sections || [];
